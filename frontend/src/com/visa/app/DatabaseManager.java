@@ -87,6 +87,35 @@ public class DatabaseManager {
                     "FOREIGN KEY(application_id) REFERENCES applications(id) ON DELETE CASCADE" +
                     ");");
 
+            // Migrate table schema to add the new fields if they don't exist
+            String[] newColumns = {
+                "entry_type TEXT",
+                "length_of_stay INTEGER",
+                "port_of_entry TEXT",
+                "destination_after TEXT",
+                "age_upon_app INTEGER",
+                "date_of_app TEXT",
+                "purpose_type TEXT",
+                "sponsor_name TEXT",
+                "sponsor_contact TEXT"
+            };
+            
+            for (String col : newColumns) {
+                String colName = col.split(" ")[0];
+                try (Statement testStmt = conn.createStatement()) {
+                    // Check if column exists
+                    testStmt.execute("SELECT " + colName + " FROM applications LIMIT 1;");
+                } catch (SQLException e) {
+                    // Column doesn't exist, add it
+                    try (Statement alterStmt = conn.createStatement()) {
+                        alterStmt.execute("ALTER TABLE applications ADD COLUMN " + col + ";");
+                        System.out.println("Migrated: Added column " + colName + " to applications table.");
+                    } catch (SQLException ex) {
+                        System.err.println("Error adding column " + colName + ": " + ex.getMessage());
+                    }
+                }
+            }
+
             // Seed Default Users
             seedDefaultUsers(conn);
 
@@ -177,7 +206,9 @@ public class DatabaseManager {
             // 1. Insert Application
             String sqlApp = "INSERT INTO applications (user_id, full_name, sex, citizenship, civil_status, birth_date, " +
                     "place_of_birth, email, contact_number, home_address, father_name, mother_name, spouse_name, " +
-                    "with_children, occupation, employer_address, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "with_children, occupation, employer_address, status, " +
+                    "entry_type, length_of_stay, port_of_entry, destination_after, age_upon_app, date_of_app, purpose_type, sponsor_name, sponsor_contact) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             pstmtApp = conn.prepareStatement(sqlApp, Statement.RETURN_GENERATED_KEYS);
             pstmtApp.setInt(1, app.getUserId());
@@ -197,6 +228,15 @@ public class DatabaseManager {
             pstmtApp.setString(15, app.getOccupation());
             pstmtApp.setString(16, app.getEmployerAddress());
             pstmtApp.setString(17, app.getStatus());
+            pstmtApp.setString(18, app.getEntryType());
+            pstmtApp.setInt(19, app.getLengthOfStay());
+            pstmtApp.setString(20, app.getPortOfEntry());
+            pstmtApp.setString(21, app.getDestinationAfter());
+            pstmtApp.setInt(22, app.getAgeUponApp());
+            pstmtApp.setString(23, app.getDateOfApp());
+            pstmtApp.setString(24, app.getPurposeType());
+            pstmtApp.setString(25, app.getSponsorName());
+            pstmtApp.setString(26, app.getSponsorContact());
             pstmtApp.executeUpdate();
 
             generatedKeys = pstmtApp.getGeneratedKeys();
@@ -272,7 +312,8 @@ public class DatabaseManager {
             // 1. Update applications table
             String sqlApp = "UPDATE applications SET full_name=?, sex=?, citizenship=?, civil_status=?, birth_date=?, " +
                     "place_of_birth=?, email=?, contact_number=?, home_address=?, father_name=?, mother_name=?, " +
-                    "spouse_name=?, with_children=?, occupation=?, employer_address=?, status=? WHERE id=?";
+                    "spouse_name=?, with_children=?, occupation=?, employer_address=?, status=?, " +
+                    "entry_type=?, length_of_stay=?, port_of_entry=?, destination_after=?, age_upon_app=?, date_of_app=?, purpose_type=?, sponsor_name=?, sponsor_contact=? WHERE id=?";
             pstmtApp = conn.prepareStatement(sqlApp);
             pstmtApp.setString(1, app.getFullName());
             pstmtApp.setString(2, app.getSex());
@@ -290,7 +331,16 @@ public class DatabaseManager {
             pstmtApp.setString(14, app.getOccupation());
             pstmtApp.setString(15, app.getEmployerAddress());
             pstmtApp.setString(16, app.getStatus());
-            pstmtApp.setInt(17, app.getId());
+            pstmtApp.setString(17, app.getEntryType());
+            pstmtApp.setInt(18, app.getLengthOfStay());
+            pstmtApp.setString(19, app.getPortOfEntry());
+            pstmtApp.setString(20, app.getDestinationAfter());
+            pstmtApp.setInt(21, app.getAgeUponApp());
+            pstmtApp.setString(22, app.getDateOfApp());
+            pstmtApp.setString(23, app.getPurposeType());
+            pstmtApp.setString(24, app.getSponsorName());
+            pstmtApp.setString(25, app.getSponsorContact());
+            pstmtApp.setInt(26, app.getId());
             pstmtApp.executeUpdate();
 
             // 2. Delete old children and insert updated list
@@ -381,11 +431,26 @@ public class DatabaseManager {
     }
 
     public List<VisaApplication> getApplicationsByUserId(int userId) {
-        String sql = "SELECT * FROM applications WHERE user_id = ? ORDER BY id DESC";
+        String email = "";
+        String userSql = "SELECT email FROM users WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(userSql)) {
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    email = rs.getString("email");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error reading user email: " + e.getMessage());
+        }
+
+        String sql = "SELECT * FROM applications WHERE user_id = ? AND email = ? ORDER BY id DESC";
         List<VisaApplication> list = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, userId);
+            pstmt.setString(2, email);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapResultSetToApplication(conn, rs));
@@ -455,6 +520,16 @@ public class DatabaseManager {
                 rs.getString("employer_address"),
                 rs.getString("status")
         );
+
+        app.setEntryType(rs.getString("entry_type"));
+        app.setLengthOfStay(rs.getInt("length_of_stay"));
+        app.setPortOfEntry(rs.getString("port_of_entry"));
+        app.setDestinationAfter(rs.getString("destination_after"));
+        app.setAgeUponApp(rs.getInt("age_upon_app"));
+        app.setDateOfApp(rs.getString("date_of_app"));
+        app.setPurposeType(rs.getString("purpose_type"));
+        app.setSponsorName(rs.getString("sponsor_name"));
+        app.setSponsorContact(rs.getString("sponsor_contact"));
 
         // Load children
         String sqlChildren = "SELECT * FROM children WHERE application_id = ?";

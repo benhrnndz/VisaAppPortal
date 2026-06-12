@@ -158,7 +158,7 @@ class Document {
     }
 
     public String getDocumentType() {
-        return documentType;
+        return documentType == null ? "" : documentType;
     }
 
     public void setDocumentType(String documentType) {
@@ -166,7 +166,7 @@ class Document {
     }
 
     public String getPassportNumber() {
-        return passportNumber;
+        return passportNumber == null ? "" : passportNumber;
     }
 
     public void setPassportNumber(String passportNumber) {
@@ -174,7 +174,7 @@ class Document {
     }
 
     public String getIssuingAuthority() {
-        return issuingAuthority;
+        return issuingAuthority == null ? "" : issuingAuthority;
     }
 
     public void setIssuingAuthority(String issuingAuthority) {
@@ -182,7 +182,7 @@ class Document {
     }
 
     public String getDateIssued() {
-        return dateIssued;
+        return dateIssued == null ? "" : dateIssued;
     }
 
     public void setDateIssued(String dateIssued) {
@@ -190,7 +190,7 @@ class Document {
     }
 
     public String getValidityDate() {
-        return validityDate;
+        return validityDate == null ? "" : validityDate;
     }
 
     public void setValidityDate(String validityDate) {
@@ -233,6 +233,17 @@ class VisaApplication {
     // Application Status
     private String status; // "PENDING", "APPROVED", "DENIED"
 
+    // Application Details (Required/Optional)
+    private String entryType;
+    private int lengthOfStay;
+    private String portOfEntry;
+    private String destinationAfter;
+    private int ageUponApp;
+    private String dateOfApp;
+    private String purposeType;
+    private String sponsorName;
+    private String sponsorContact;
+
     public VisaApplication(int id, int userId, String fullName, String sex, String citizenship, String civilStatus,
                            String birthDate, String placeOfBirth, String email, String contactNumber, String homeAddress,
                            String fatherName, String motherName, String spouseName, boolean withChildren,
@@ -257,6 +268,15 @@ class VisaApplication {
         this.status = status;
         this.children = new ArrayList<>();
         this.documents = new ArrayList<>();
+        this.entryType = "";
+        this.lengthOfStay = 0;
+        this.portOfEntry = "";
+        this.destinationAfter = "";
+        this.ageUponApp = 0;
+        this.dateOfApp = "";
+        this.purposeType = "";
+        this.sponsorName = "";
+        this.sponsorContact = "";
     }
 
     public VisaApplication() {
@@ -280,7 +300,7 @@ class VisaApplication {
     }
 
     public String getFullName() {
-        return fullName;
+        return fullName == null ? "" : fullName;
     }
 
     public void setFullName(String fullName) {
@@ -288,7 +308,7 @@ class VisaApplication {
     }
 
     public String getSex() {
-        return sex;
+        return sex == null ? "" : sex;
     }
 
     public void setSex(String sex) {
@@ -296,7 +316,7 @@ class VisaApplication {
     }
 
     public String getCitizenship() {
-        return citizenship;
+        return citizenship == null ? "" : citizenship;
     }
 
     public void setCitizenship(String citizenship) {
@@ -304,7 +324,7 @@ class VisaApplication {
     }
 
     public String getCivilStatus() {
-        return civilStatus;
+        return civilStatus == null ? "" : civilStatus;
     }
 
     public void setCivilStatus(String civilStatus) {
@@ -312,7 +332,7 @@ class VisaApplication {
     }
 
     public String getBirthDate() {
-        return birthDate;
+        return birthDate == null ? "" : birthDate;
     }
 
     public void setBirthDate(String birthDate) {
@@ -320,7 +340,7 @@ class VisaApplication {
     }
 
     public String getPlaceOfBirth() {
-        return placeOfBirth;
+        return placeOfBirth == null ? "" : placeOfBirth;
     }
 
     public void setPlaceOfBirth(String placeOfBirth) {
@@ -328,7 +348,7 @@ class VisaApplication {
     }
 
     public String getEmail() {
-        return email;
+        return email == null ? "" : email;
     }
 
     public void setEmail(String email) {
@@ -336,7 +356,7 @@ class VisaApplication {
     }
 
     public String getContactNumber() {
-        return contactNumber;
+        return contactNumber == null ? "" : contactNumber;
     }
 
     public void setContactNumber(String contactNumber) {
@@ -344,7 +364,7 @@ class VisaApplication {
     }
 
     public String getHomeAddress() {
-        return homeAddress;
+        return homeAddress == null ? "" : homeAddress;
     }
 
     public void setHomeAddress(String homeAddress) {
@@ -352,7 +372,7 @@ class VisaApplication {
     }
 
     public String getFatherName() {
-        return fatherName;
+        return fatherName == null ? "" : fatherName;
     }
 
     public void setFatherName(String fatherName) {
@@ -360,7 +380,7 @@ class VisaApplication {
     }
 
     public String getMotherName() {
-        return motherName;
+        return motherName == null ? "" : motherName;
     }
 
     public void setMotherName(String motherName) {
@@ -368,7 +388,7 @@ class VisaApplication {
     }
 
     public String getSpouseName() {
-        return spouseName;
+        return spouseName == null ? "" : spouseName;
     }
 
     public void setSpouseName(String spouseName) {
@@ -396,7 +416,7 @@ class VisaApplication {
     }
 
     public String getOccupation() {
-        return occupation;
+        return occupation == null ? "" : occupation;
     }
 
     public void setOccupation(String occupation) {
@@ -404,7 +424,7 @@ class VisaApplication {
     }
 
     public String getEmployerAddress() {
-        return employerAddress;
+        return employerAddress == null ? "" : employerAddress;
     }
 
     public void setEmployerAddress(String employerAddress) {
@@ -424,10 +444,83 @@ class VisaApplication {
     }
 
     public String getStatus() {
-        return status;
+        return status == null ? "" : status;
     }
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    // Getters and Setters for Application Details
+    public String getEntryType() {
+        return entryType == null ? "" : entryType;
+    }
+
+    public void setEntryType(String entryType) {
+        this.entryType = entryType;
+    }
+
+    public int getLengthOfStay() {
+        return lengthOfStay;
+    }
+
+    public void setLengthOfStay(int lengthOfStay) {
+        this.lengthOfStay = lengthOfStay;
+    }
+
+    public String getPortOfEntry() {
+        return portOfEntry == null ? "" : portOfEntry;
+    }
+
+    public void setPortOfEntry(String portOfEntry) {
+        this.portOfEntry = portOfEntry;
+    }
+
+    public String getDestinationAfter() {
+        return destinationAfter == null ? "" : destinationAfter;
+    }
+
+    public void setDestinationAfter(String destinationAfter) {
+        this.destinationAfter = destinationAfter;
+    }
+
+    public int getAgeUponApp() {
+        return ageUponApp;
+    }
+
+    public void setAgeUponApp(int ageUponApp) {
+        this.ageUponApp = ageUponApp;
+    }
+
+    public String getDateOfApp() {
+        return dateOfApp == null ? "" : dateOfApp;
+    }
+
+    public void setDateOfApp(String dateOfApp) {
+        this.dateOfApp = dateOfApp;
+    }
+
+    public String getPurposeType() {
+        return purposeType == null ? "" : purposeType;
+    }
+
+    public void setPurposeType(String purposeType) {
+        this.purposeType = purposeType;
+    }
+
+    public String getSponsorName() {
+        return sponsorName == null ? "" : sponsorName;
+    }
+
+    public void setSponsorName(String sponsorName) {
+        this.sponsorName = sponsorName;
+    }
+
+    public String getSponsorContact() {
+        return sponsorContact == null ? "" : sponsorContact;
+    }
+
+    public void setSponsorContact(String sponsorContact) {
+        this.sponsorContact = sponsorContact;
     }
 }

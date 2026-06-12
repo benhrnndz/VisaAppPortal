@@ -87,6 +87,19 @@ public class XMLManager {
         appendTextElement(doc, personalInfo, "ContactNumber", app.getContactNumber());
         appendTextElement(doc, personalInfo, "HomeAddress", app.getHomeAddress());
 
+        // Application Details
+        Element appDetails = doc.createElement("ApplicationDetails");
+        parentElement.appendChild(appDetails);
+        appendTextElement(doc, appDetails, "EntryType", app.getEntryType());
+        appendTextElement(doc, appDetails, "LengthOfStay", String.valueOf(app.getLengthOfStay()));
+        appendTextElement(doc, appDetails, "PortOfEntry", app.getPortOfEntry());
+        appendTextElement(doc, appDetails, "DestinationAfter", app.getDestinationAfter());
+        appendTextElement(doc, appDetails, "AgeUponApp", String.valueOf(app.getAgeUponApp()));
+        appendTextElement(doc, appDetails, "DateOfApp", app.getDateOfApp());
+        appendTextElement(doc, appDetails, "PurposeType", app.getPurposeType());
+        appendTextElement(doc, appDetails, "SponsorName", app.getSponsorName());
+        appendTextElement(doc, appDetails, "SponsorContact", app.getSponsorContact());
+
         // Family Information
         Element familyInfo = doc.createElement("FamilyInformation");
         parentElement.appendChild(familyInfo);

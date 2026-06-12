@@ -22,8 +22,8 @@ public class VisaUI {
 class Theme {
     // Colors
     public static final Color PRIMARY_BLUE = new Color(15, 76, 129); // Classic Deep Blue
-    public static final Color ACCENT_BLUE = new Color(41, 128, 185);  // Vibrant Sky Blue
-    public static final Color BACKGROUND = new Color(245, 247, 250);  // Soft Off-white
+    public static final Color ACCENT_BLUE = new Color(41, 128, 185); // Vibrant Sky Blue
+    public static final Color BACKGROUND = new Color(245, 247, 250); // Soft Off-white
     public static final Color WHITE = Color.WHITE;
     public static final Color BORDER_COLOR = new Color(210, 220, 235);
     public static final Color TEXT_DARK = new Color(45, 55, 72);
@@ -32,8 +32,8 @@ class Theme {
 
     // Status Colors
     public static final Color STATUS_APPROVED = new Color(46, 204, 113); // Emerald Green
-    public static final Color STATUS_PENDING = new Color(241, 196, 15);   // Yellow
-    public static final Color STATUS_DENIED = new Color(231, 76, 60);     // Alizarin Red
+    public static final Color STATUS_PENDING = new Color(241, 196, 15); // Yellow
+    public static final Color STATUS_DENIED = new Color(231, 76, 60); // Alizarin Red
 
     // Fonts
     public static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 24);
@@ -61,7 +61,7 @@ class Theme {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
+
                 Color paintColor = bgColor;
                 if (getModel().isPressed()) {
                     paintColor = bgColor.darker();
@@ -72,7 +72,7 @@ class Theme {
                         paintColor = bgColor.brighter();
                     }
                 }
-                
+
                 g2.setColor(paintColor);
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 g2.dispose();
@@ -89,8 +89,7 @@ class Theme {
         if (bgColor == WHITE) {
             button.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(PRIMARY_BLUE, 1),
-                    BorderFactory.createEmptyBorder(8, 16, 8, 16)
-            ));
+                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
         } else {
             button.setBorder(BorderFactory.createEmptyBorder(9, 17, 9, 17));
         }
@@ -103,8 +102,7 @@ class Theme {
         panel.setBackground(WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_COLOR, 1),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
         return panel;
     }
 
@@ -133,8 +131,7 @@ class Theme {
         comp.setBackground(WHITE);
         comp.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_COLOR, 1),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)
-        ));
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
     }
 
     public static void showDetailsDialog(JFrame parentFrame, VisaApplication app) {
@@ -152,7 +149,7 @@ class Theme {
         JLabel titleLabel = new JLabel("DETAILS: " + app.getFullName().toUpperCase());
         titleLabel.setFont(Theme.HEADER_FONT);
         titleLabel.setForeground(Theme.WHITE);
-        
+
         JLabel statusLabel = new JLabel("Status: " + app.getStatus());
         statusLabel.setFont(Theme.BOLD_FONT);
         if ("APPROVED".equalsIgnoreCase(app.getStatus())) {
@@ -167,9 +164,11 @@ class Theme {
         hPanel.add(statusLabel, BorderLayout.EAST);
         mainPanel.add(hPanel, BorderLayout.NORTH);
 
-        StringBuilder html = new StringBuilder("<html><body style='font-family: Segoe UI, sans-serif; font-size: 11px; margin: 10px;'>");
-        
-        html.append("<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>1. Personal Information</h3>");
+        StringBuilder html = new StringBuilder(
+                "<html><body style='font-family: Segoe UI, sans-serif; font-size: 11px; margin: 10px;'>");
+
+        html.append(
+                "<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>1. Personal Information</h3>");
         html.append("<b>Sex:</b> ").append(app.getSex()).append("<br>");
         html.append("<b>Citizenship:</b> ").append(app.getCitizenship()).append("<br>");
         html.append("<b>Civil Status:</b> ").append(app.getCivilStatus()).append("<br>");
@@ -179,12 +178,30 @@ class Theme {
         html.append("<b>Contact:</b> ").append(app.getContactNumber()).append("<br>");
         html.append("<b>Home Address:</b> ").append(app.getHomeAddress()).append("<br>");
 
-        html.append("<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>2. Family Information</h3>");
-        html.append("<b>Father's Name:</b> ").append(app.getFatherName().isEmpty() ? "N/A" : app.getFatherName()).append("<br>");
-        html.append("<b>Mother's Name:</b> ").append(app.getMotherName().isEmpty() ? "N/A" : app.getMotherName()).append("<br>");
-        html.append("<b>Spouse's Name:</b> ").append(app.getSpouseName().isEmpty() ? "N/A" : app.getSpouseName()).append("<br>");
+        html.append(
+                "<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>2. Application Details</h3>");
+        html.append("<b>Requested Entry Type:</b> ").append(app.getEntryType()).append("<br>");
+        html.append("<b>Length of Stay:</b> ").append(app.getLengthOfStay()).append(" days<br>");
+        html.append("<b>Port of Entry:</b> ").append(app.getPortOfEntry()).append("<br>");
+        html.append("<b>Destination After Philippines:</b> ").append(app.getDestinationAfter()).append("<br>");
+        html.append("<b>Age Upon Application:</b> ").append(app.getAgeUponApp()).append("<br>");
+        html.append("<b>Date of Application:</b> ").append(app.getDateOfApp()).append("<br>");
+        html.append("<b>Purpose Type:</b> ").append(app.getPurposeType()).append("<br>");
+        html.append("<b>Sponsor Name:</b> ").append(app.getSponsorName().isEmpty() ? "N/A" : app.getSponsorName())
+                .append("<br>");
+        html.append("<b>Sponsor Contact Number:</b> ")
+                .append(app.getSponsorContact().isEmpty() ? "N/A" : app.getSponsorContact()).append("<br>");
+
+        html.append(
+                "<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>3. Family Information</h3>");
+        html.append("<b>Father's Name:</b> ").append(app.getFatherName().isEmpty() ? "N/A" : app.getFatherName())
+                .append("<br>");
+        html.append("<b>Mother's Name:</b> ").append(app.getMotherName().isEmpty() ? "N/A" : app.getMotherName())
+                .append("<br>");
+        html.append("<b>Spouse's Name:</b> ").append(app.getSpouseName().isEmpty() ? "N/A" : app.getSpouseName())
+                .append("<br>");
         html.append("<b>With Children:</b> ").append(app.isWithChildren() ? "Yes" : "No").append("<br>");
-        
+
         if (app.isWithChildren() && app.getChildren() != null && !app.getChildren().isEmpty()) {
             html.append("<b>Children Profiles:</b><ul style='margin-top: 3px;'>");
             for (Child c : app.getChildren()) {
@@ -193,21 +210,30 @@ class Theme {
             html.append("</ul>");
         }
 
-        html.append("<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>3. Employment Information</h3>");
-        html.append("<b>Occupation:</b> ").append(app.getOccupation().isEmpty() ? "N/A" : app.getOccupation()).append("<br>");
-        html.append("<b>Employer/Address:</b> ").append(app.getEmployerAddress().isEmpty() ? "N/A" : app.getEmployerAddress()).append("<br>");
+        html.append(
+                "<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>4. Employment Information</h3>");
+        html.append("<b>Occupation:</b> ").append(app.getOccupation().isEmpty() ? "N/A" : app.getOccupation())
+                .append("<br>");
+        html.append("<b>Employer/Address:</b> ")
+                .append(app.getEmployerAddress().isEmpty() ? "N/A" : app.getEmployerAddress()).append("<br>");
 
-        html.append("<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>4. Attached Travel Documents</h3>");
+        html.append(
+                "<h3 style='color:#0f4c81; border-bottom: 1px solid #d2e0eb; padding-bottom: 3px;'>5. Attached Travel Documents</h3>");
         if (app.getDocuments() != null && !app.getDocuments().isEmpty()) {
-            html.append("<table border='1' style='border-collapse: collapse; font-size: 10px; width: 100%; text-align: left;'>");
-            html.append("<tr style='background-color: #f5f7fa;'><th>Type</th><th>Number</th><th>Authority</th><th>Dates</th></tr>");
+            html.append(
+                    "<table border='1' style='border-collapse: collapse; font-size: 10px; width: 100%; text-align: left;'>");
+            html.append(
+                    "<tr style='background-color: #f5f7fa;'><th>Type</th><th>Number</th><th>Authority</th><th>Dates</th></tr>");
             for (Document d : app.getDocuments()) {
                 html.append("<tr>");
                 html.append("<td>").append(d.getDocumentType()).append("</td>");
-                html.append("<td>").append(d.getPassportNumber().isEmpty() ? "N/A" : d.getPassportNumber()).append("</td>");
-                html.append("<td>").append(d.getIssuingAuthority().isEmpty() ? "N/A" : d.getIssuingAuthority()).append("</td>");
+                html.append("<td>").append(d.getPassportNumber().isEmpty() ? "N/A" : d.getPassportNumber())
+                        .append("</td>");
+                html.append("<td>").append(d.getIssuingAuthority().isEmpty() ? "N/A" : d.getIssuingAuthority())
+                        .append("</td>");
                 if ("Original Passport".equalsIgnoreCase(d.getDocumentType())) {
-                    html.append("<td>").append(d.getDateIssued()).append(" - ").append(d.getValidityDate()).append("</td>");
+                    html.append("<td>").append(d.getDateIssued()).append(" - ").append(d.getValidityDate())
+                            .append("</td>");
                 } else {
                     html.append("<td>N/A</td>");
                 }
@@ -232,6 +258,142 @@ class Theme {
 
         dialog.add(mainPanel);
         dialog.setVisible(true);
+    }
+
+    public static boolean isValidDateString(String dateStr) {
+        if (dateStr == null || !dateStr.matches("\\d{4}/\\d{2}/\\d{2}")) {
+            return false;
+        }
+        String[] parts = dateStr.split("/");
+        try {
+            int year = Integer.parseInt(parts[0]);
+            int month = Integer.parseInt(parts[1]);
+            int day = Integer.parseInt(parts[2]);
+
+            if (month < 1 || month > 12) {
+                return false;
+            }
+
+            int maxDays = 31;
+            if (month == 4 || month == 6 || month == 9 || month == 11) {
+                maxDays = 30;
+            } else if (month == 2) {
+                if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+                    maxDays = 29;
+                } else {
+                    maxDays = 28;
+                }
+            }
+            return day >= 1 && day <= maxDays;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public static void setupAutomaticDateField(JTextField textField) {
+        textField.addKeyListener(new java.awt.event.KeyAdapter() {
+            private boolean isDeleting = false;
+
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                isDeleting = (e.getKeyCode() == java.awt.event.KeyEvent.VK_BACK_SPACE
+                        || e.getKeyCode() == java.awt.event.KeyEvent.VK_DELETE);
+            }
+
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                if (isDeleting)
+                    return;
+
+                String text = textField.getText();
+                int caretPos = textField.getCaretPosition();
+                String[] parts = text.split("/", -1);
+                StringBuilder sb = new StringBuilder();
+
+                if (parts.length > 0) {
+                    String year = parts[0].replaceAll("\\D", "");
+                    if (year.length() > 4) {
+                        year = year.substring(0, 4);
+                    }
+                    sb.append(year);
+
+                    if (year.length() == 4) {
+                        sb.append("/");
+                        if (parts.length > 1) {
+                            String month = parts[1].replaceAll("\\D", "");
+                            boolean typedSlashAfterMonth = (parts.length > 2);
+                            if (month.length() == 1) {
+                                char m = month.charAt(0);
+                                if (typedSlashAfterMonth || (m >= '2' && m <= '9')) {
+                                    month = "0" + month;
+                                }
+                            } else if (month.length() > 2) {
+                                month = month.substring(0, 2);
+                            }
+
+                            sb.append(month);
+                            if (month.length() == 2) {
+                                sb.append("/");
+                                if (parts.length > 2) {
+                                    String day = parts[2].replaceAll("\\D", "");
+                                    boolean typedSlashAfterDay = (parts.length > 3);
+                                    if (day.length() == 1) {
+                                        char d = day.charAt(0);
+                                        if (typedSlashAfterDay || (d >= '4' && d <= '9')) {
+                                            day = "0" + day;
+                                        }
+                                    } else if (day.length() > 2) {
+                                        day = day.substring(0, 2);
+                                    }
+                                    sb.append(day);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                String formatted = sb.toString();
+                if (!formatted.equals(text)) {
+                    textField.setText(formatted);
+                    int newPos = Math.min(caretPos + (formatted.length() - text.length()), formatted.length());
+                    if (newPos >= 0) {
+                        textField.setCaretPosition(newPos);
+                    }
+                }
+            }
+        });
+
+        textField.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                String text = textField.getText().trim();
+                if (text.isEmpty())
+                    return;
+                String[] parts = text.split("/", -1);
+                StringBuilder sb = new StringBuilder();
+                if (parts.length > 0) {
+                    String year = parts[0].replaceAll("\\D", "");
+                    sb.append(year);
+                    if (year.length() == 4) {
+                        sb.append("/");
+                        String month = parts.length > 1 ? parts[1].replaceAll("\\D", "") : "";
+                        if (month.length() == 1) {
+                            month = "0" + month;
+                        }
+                        sb.append(month);
+                        if (!month.isEmpty()) {
+                            sb.append("/");
+                            String day = parts.length > 2 ? parts[2].replaceAll("\\D", "") : "";
+                            if (day.length() == 1) {
+                                day = "0" + day;
+                            }
+                            sb.append(day);
+                        }
+                    }
+                }
+                textField.setText(sb.toString());
+            }
+        });
     }
 }
 
@@ -322,7 +484,7 @@ class LoginScreen extends JFrame {
         panel.add(roleLabel, gbc);
 
         gbc.gridy = 5;
-        loginRoleCombo = new JComboBox<>(new String[]{"Applicant", "Administrator"});
+        loginRoleCombo = new JComboBox<>(new String[] { "Applicant", "Administrator" });
         loginRoleCombo.setFont(Theme.REGULAR_FONT);
         loginRoleCombo.setBackground(Theme.WHITE);
         loginRoleCombo.setBorder(BorderFactory.createLineBorder(Theme.BORDER_COLOR));
@@ -335,7 +497,8 @@ class LoginScreen extends JFrame {
 
         gbc.gridy = 7;
         gbc.insets = new Insets(5, 0, 5, 0);
-        JButton switchBtn = new JButton("<html>Don't have an account? <font color='#2980b9'><b>Register</b></font></html>");
+        JButton switchBtn = new JButton(
+                "<html>Don't have an account? <font color='#2980b9'><b>Register</b></font></html>");
         styleLinkButton(switchBtn);
         panel.add(switchBtn, gbc);
 
@@ -396,7 +559,8 @@ class LoginScreen extends JFrame {
 
         gbc.gridy = 7;
         gbc.insets = new Insets(5, 0, 5, 0);
-        JButton switchBtn = new JButton("<html>Already have an account? <font color='#2980b9'><b>Login</b></font></html>");
+        JButton switchBtn = new JButton(
+                "<html>Already have an account? <font color='#2980b9'><b>Login</b></font></html>");
         styleLinkButton(switchBtn);
         panel.add(switchBtn, gbc);
 
@@ -430,13 +594,14 @@ class LoginScreen extends JFrame {
         String email = loginEmailField.getText().trim();
         String password = new String(loginPasswordField.getPassword()).trim();
         String selectedRole = ((String) loginRoleCombo.getSelectedItem()).toUpperCase();
-        
+
         if ("ADMINISTRATOR".equals(selectedRole)) {
             selectedRole = "ADMIN";
         }
 
         if (email.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter both Email and Password.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please enter both Email and Password.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -450,10 +615,12 @@ class LoginScreen extends JFrame {
                     mainFrame.setVisible(true);
                 });
             } else {
-                JOptionPane.showMessageDialog(this, "Invalid credentials for the selected Access Level.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Invalid credentials for the selected Access Level.",
+                        "Login Failed", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Invalid email or password.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Invalid email or password.", "Login Failed",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -468,7 +635,8 @@ class LoginScreen extends JFrame {
         }
 
         if (!email.contains("@") || !email.contains(".")) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -478,18 +646,21 @@ class LoginScreen extends JFrame {
         }
 
         if (password.length() < 4) {
-            JOptionPane.showMessageDialog(this, "Password must be at least 4 characters.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Password must be at least 4 characters.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         boolean success = DatabaseManager.getInstance().registerUser(email, password, "APPLICANT");
 
         if (success) {
-            JOptionPane.showMessageDialog(this, "Registration Successful! You can now log in.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Registration Successful! You can now log in.", "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
             clearFields();
             cardLayout.show(mainCardPanel, "LOGIN");
         } else {
-            JOptionPane.showMessageDialog(this, "Email is already registered.", "Registration Failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Email is already registered.", "Registration Failed",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }
@@ -532,7 +703,7 @@ class MainFrame extends JFrame {
         mainMenuPanel = new MainMenuPanel(this);
         howToApplyPanel = new HowToApplyPanel(this);
         visaApplicationWizard = new VisaApplicationWizard(this, currentUser.getId());
-        
+
         centerPanel.add(mainMenuPanel, "HOME");
         centerPanel.add(howToApplyPanel, "HOW_TO_APPLY");
         centerPanel.add(visaApplicationWizard, "APPLY");
@@ -607,6 +778,7 @@ class MainFrame extends JFrame {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 btn.setForeground(Theme.BORDER_COLOR);
             }
+
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 if (text.equals("Logout")) {
                     btn.setForeground(new Color(240, 100, 100));
@@ -641,12 +813,11 @@ class MainFrame extends JFrame {
 
     private void handleLogout() {
         int choice = JOptionPane.showConfirmDialog(
-                this, 
-                "Are you sure you want to log out?", 
-                "Logout Confirmation", 
+                this,
+                "Are you sure you want to log out?",
+                "Logout Confirmation",
                 JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
+                JOptionPane.QUESTION_MESSAGE);
         if (choice == JOptionPane.YES_OPTION) {
             this.dispose();
             SwingUtilities.invokeLater(() -> {
@@ -772,24 +943,29 @@ class HowToApplyPanel extends JPanel {
         gbc.insets = new Insets(15, 40, 15, 40);
 
         gbc.gridy = 0;
-        contentScrollPanel.add(createStepCard("1", "Register/Login", 
-                "Create a personal applicant account using your email and password. Log in using your credentials to access your personal application space."), gbc);
+        contentScrollPanel.add(createStepCard("1", "Register/Login",
+                "Create a personal applicant account using your email and password. Log in using your credentials to access your personal application space."),
+                gbc);
 
         gbc.gridy = 1;
-        contentScrollPanel.add(createStepCard("2", "Fill Personal Details", 
-                "Select 'Apply for Visa' from the top menu. Fill out page 1 of the application wizard containing all required personal information (Full Name, Address, Contact, Birth details)."), gbc);
+        contentScrollPanel.add(createStepCard("2", "Fill Personal Details",
+                "Select 'Apply for Visa' from the top menu. Fill out page 1 of the application wizard containing all required personal information (Full Name, Address, Contact, Birth details)."),
+                gbc);
 
         gbc.gridy = 2;
-        contentScrollPanel.add(createStepCard("3", "Provide Additional Information (Optional)", 
-                "Fill out family profiles, spouse name, and add children's names and ages if applicable. Provide employment information including current occupation and employer office address."), gbc);
+        contentScrollPanel.add(createStepCard("3", "Provide Additional Information (Optional)",
+                "Fill out family profiles, spouse name, and add children's names and ages if applicable. Provide employment information including current occupation and employer office address."),
+                gbc);
 
         gbc.gridy = 3;
-        contentScrollPanel.add(createStepCard("4", "Attach Travel Documents (Required)", 
-                "Provide at least one travel document (e.g., Original Passport, Air Ticket, Bank Certificate, or Invitation Letter). Ensure passport details such as number and validity are entered correctly."), gbc);
+        contentScrollPanel.add(createStepCard("4", "Attach Travel Documents (Required)",
+                "Provide at least one travel document (e.g., Original Passport, Air Ticket, Bank Certificate, or Invitation Letter). Ensure passport details such as number and validity are entered correctly."),
+                gbc);
 
         gbc.gridy = 4;
-        contentScrollPanel.add(createStepCard("5", "Submit and Track Status", 
-                "Submit your application. Navigate to the 'Dashboard' submenu to review your personal details, edit/delete pending requests, or track whether the Administrator has Approved or Denied your file."), gbc);
+        contentScrollPanel.add(createStepCard("5", "Submit and Track Status",
+                "Submit your application. Navigate to the 'Dashboard' submenu to review your personal details, edit/delete pending requests, or track whether the Administrator has Approved or Denied your file."),
+                gbc);
 
         JScrollPane scrollPane = new JScrollPane(contentScrollPanel);
         scrollPane.setBorder(null);
@@ -801,8 +977,7 @@ class HowToApplyPanel extends JPanel {
             actionPanel.setBackground(Theme.WHITE);
             actionPanel.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER_COLOR),
-                    BorderFactory.createEmptyBorder(15, 0, 15, 0)
-            ));
+                    BorderFactory.createEmptyBorder(15, 0, 15, 0)));
 
             JButton startBtn = Theme.createPrimaryButton("Start Application Now");
             startBtn.addActionListener(e -> mainFrame.showPanel("APPLY"));
@@ -816,8 +991,7 @@ class HowToApplyPanel extends JPanel {
         card.setBackground(Theme.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.BORDER_COLOR, 1),
-                BorderFactory.createEmptyBorder(15, 20, 15, 20)
-        ));
+                BorderFactory.createEmptyBorder(15, 20, 15, 20)));
 
         JPanel circlePanel = new JPanel() {
             @Override
@@ -847,7 +1021,8 @@ class HowToApplyPanel extends JPanel {
         stepTitle.setForeground(Theme.PRIMARY_BLUE);
         textPanel.add(stepTitle);
 
-        JLabel stepDesc = new JLabel("<html><body style='font-family: Segoe UI, sans-serif; font-size: 11px;'>" + description + "</body></html>");
+        JLabel stepDesc = new JLabel("<html><body style='font-family: Segoe UI, sans-serif; font-size: 11px;'>"
+                + description + "</body></html>");
         stepDesc.setFont(Theme.REGULAR_FONT);
         stepDesc.setForeground(Theme.TEXT_DARK);
         textPanel.add(stepDesc);
@@ -895,6 +1070,22 @@ class VisaApplicationWizard extends JPanel {
     private JTable docTable;
     private List<Document> tempDocList;
 
+    // Passport specific fields directly on Page 2
+    private JTextField passportNumField;
+    private JTextField passportAuthField;
+    private JTextField passportIssuedField;
+    private JTextField passportExpiryField;
+
+    // Page 3: Application Details fields
+    private JComboBox<String> entryTypeCombo;
+    private JTextField lengthOfStayField;
+    private JComboBox<String> portOfEntryCombo;
+    private JTextField destinationAfterField;
+    private JTextField dateOfAppField;
+    private JComboBox<String> purposeTypeCombo;
+    private JTextField sponsorNameField;
+    private JTextField sponsorContactField;
+
     public VisaApplicationWizard(MainFrame mainFrame, int currentUserId) {
         this.mainFrame = mainFrame;
         this.currentUserId = currentUserId;
@@ -908,8 +1099,7 @@ class VisaApplicationWizard extends JPanel {
         headerPanel.setBackground(Theme.WHITE);
         headerPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_COLOR),
-                BorderFactory.createEmptyBorder(15, 30, 15, 30)
-        ));
+                BorderFactory.createEmptyBorder(15, 30, 15, 30)));
 
         wizardTitleLabel = new JLabel("New Visa Application");
         wizardTitleLabel.setFont(Theme.TITLE_FONT);
@@ -924,6 +1114,7 @@ class VisaApplicationWizard extends JPanel {
 
         wizardCardPanel.add(buildPage1Scroll(), "PAGE_1");
         wizardCardPanel.add(buildPage2Scroll(), "PAGE_2");
+        wizardCardPanel.add(buildPage3Scroll(), "PAGE_3");
 
         add(wizardCardPanel, BorderLayout.CENTER);
     }
@@ -951,7 +1142,8 @@ class VisaApplicationWizard extends JPanel {
         panel.add(new JSeparator(), gbc);
 
         gbc.gridy = row++;
-        panel.add(new JLabel("Full Name (First Name, Middle Name, Last Name)"), gbc);
+        panel.add(new JLabel("<html>Full Name (First Name, Middle Name, Last Name) <font color='red'>*</font></html>"),
+                gbc);
         gbc.gridy = row++;
         fullNameField = Theme.createTextField(30);
         panel.add(fullNameField, gbc);
@@ -961,16 +1153,16 @@ class VisaApplicationWizard extends JPanel {
 
         JPanel pSex = new JPanel(new BorderLayout(0, 5));
         pSex.setOpaque(false);
-        pSex.add(new JLabel("Sex"), BorderLayout.NORTH);
-        sexCombo = new JComboBox<>(new String[]{"Male", "Female"});
+        pSex.add(new JLabel("<html>Sex <font color='red'>*</font></html>"), BorderLayout.NORTH);
+        sexCombo = new JComboBox<>(new String[] { "Male", "Female" });
         sexCombo.setFont(Theme.REGULAR_FONT);
         sexCombo.setBackground(Theme.WHITE);
         pSex.add(sexCombo, BorderLayout.CENTER);
 
         JPanel pStatus = new JPanel(new BorderLayout(0, 5));
         pStatus.setOpaque(false);
-        pStatus.add(new JLabel("Civil Status"), BorderLayout.NORTH);
-        civilStatusCombo = new JComboBox<>(new String[]{"Single", "Married", "Widowed", "Separated"});
+        pStatus.add(new JLabel("<html>Civil Status <font color='red'>*</font></html>"), BorderLayout.NORTH);
+        civilStatusCombo = new JComboBox<>(new String[] { "Single", "Married", "Widowed", "Separated" });
         civilStatusCombo.setFont(Theme.REGULAR_FONT);
         civilStatusCombo.setBackground(Theme.WHITE);
         pStatus.add(civilStatusCombo, BorderLayout.CENTER);
@@ -982,7 +1174,7 @@ class VisaApplicationWizard extends JPanel {
         panel.add(colPanel1, gbc);
 
         gbc.gridy = row++;
-        panel.add(new JLabel("Citizenship"), gbc);
+        panel.add(new JLabel("<html>Citizenship <font color='red'>*</font></html>"), gbc);
         gbc.gridy = row++;
         citizenshipField = Theme.createTextField(30);
         panel.add(citizenshipField, gbc);
@@ -992,13 +1184,15 @@ class VisaApplicationWizard extends JPanel {
 
         JPanel pBirthDate = new JPanel(new BorderLayout(0, 5));
         pBirthDate.setOpaque(false);
-        pBirthDate.add(new JLabel("Birth Date (YYYY/MM/DD)"), BorderLayout.NORTH);
+        pBirthDate.add(new JLabel("<html>Birth Date (YYYY/MM/DD) <font color='red'>*</font></html>"),
+                BorderLayout.NORTH);
         birthDateField = Theme.createTextField(15);
+        Theme.setupAutomaticDateField(birthDateField);
         pBirthDate.add(birthDateField, BorderLayout.CENTER);
 
         JPanel pBirthPlace = new JPanel(new BorderLayout(0, 5));
         pBirthPlace.setOpaque(false);
-        pBirthPlace.add(new JLabel("Place of Birth"), BorderLayout.NORTH);
+        pBirthPlace.add(new JLabel("<html>Place of Birth <font color='red'>*</font></html>"), BorderLayout.NORTH);
         birthPlaceField = Theme.createTextField(15);
         pBirthPlace.add(birthPlaceField, BorderLayout.CENTER);
 
@@ -1013,13 +1207,13 @@ class VisaApplicationWizard extends JPanel {
 
         JPanel pEmail = new JPanel(new BorderLayout(0, 5));
         pEmail.setOpaque(false);
-        pEmail.add(new JLabel("Email Address"), BorderLayout.NORTH);
+        pEmail.add(new JLabel("<html>Email Address <font color='red'>*</font></html>"), BorderLayout.NORTH);
         emailField = Theme.createTextField(15);
         pEmail.add(emailField, BorderLayout.CENTER);
 
         JPanel pContact = new JPanel(new BorderLayout(0, 5));
         pContact.setOpaque(false);
-        pContact.add(new JLabel("Contact Number"), BorderLayout.NORTH);
+        pContact.add(new JLabel("<html>Contact Number <font color='red'>*</font></html>"), BorderLayout.NORTH);
         contactField = Theme.createTextField(15);
         pContact.add(contactField, BorderLayout.CENTER);
 
@@ -1030,7 +1224,7 @@ class VisaApplicationWizard extends JPanel {
         panel.add(colPanel3, gbc);
 
         gbc.gridy = row++;
-        panel.add(new JLabel("Home Address"), gbc);
+        panel.add(new JLabel("<html>Home Address <font color='red'>*</font></html>"), gbc);
         gbc.gridy = row++;
         addressField = Theme.createTextField(30);
         panel.add(addressField, gbc);
@@ -1039,7 +1233,7 @@ class VisaApplicationWizard extends JPanel {
         gbc.insets = new Insets(30, 0, 10, 0);
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setOpaque(false);
-        
+
         JButton nextBtn = Theme.createPrimaryButton("Next Page →");
         nextBtn.addActionListener(e -> handleNextPage());
         buttonPanel.add(nextBtn);
@@ -1103,7 +1297,7 @@ class VisaApplicationWizard extends JPanel {
         JPanel withKidsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         withKidsPanel.setOpaque(false);
         withKidsPanel.add(new JLabel("With Children?  "));
-        withChildrenCombo = new JComboBox<>(new String[]{"No", "Yes"});
+        withChildrenCombo = new JComboBox<>(new String[] { "No", "Yes" });
         withChildrenCombo.setFont(Theme.REGULAR_FONT);
         withChildrenCombo.setBackground(Theme.WHITE);
         withKidsPanel.add(withChildrenCombo);
@@ -1114,8 +1308,7 @@ class VisaApplicationWizard extends JPanel {
         childrenSection.setBackground(Theme.BACKGROUND);
         childrenSection.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.BORDER_COLOR),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         childrenSection.setVisible(false);
 
         childrenListModel = new DefaultListModel<>();
@@ -1171,7 +1364,7 @@ class VisaApplicationWizard extends JPanel {
 
         gbc.gridy = row++;
         gbc.insets = new Insets(15, 0, 8, 0);
-        JLabel docHeader = new JLabel("Travel Documents (Required - At least one)");
+        JLabel docHeader = new JLabel("Travel Documents (Passport Required)");
         docHeader.setFont(Theme.SUBTITLE_FONT);
         docHeader.setForeground(Theme.PRIMARY_BLUE);
         panel.add(docHeader, gbc);
@@ -1180,7 +1373,58 @@ class VisaApplicationWizard extends JPanel {
         gbc.insets = new Insets(8, 0, 8, 0);
         panel.add(new JSeparator(), gbc);
 
-        String[] docColumns = {"Document Type", "Passport No.", "Issuing Authority", "Issued Date", "Expiry Date"};
+        // Passport Details direct input
+        JPanel passportPanel = new JPanel(new GridLayout(2, 2, 20, 10));
+        passportPanel.setOpaque(false);
+
+        JPanel pPassNum = new JPanel(new BorderLayout(0, 5));
+        pPassNum.setOpaque(false);
+        pPassNum.add(new JLabel("<html>Passport Number <font color='red'>*</font></html>"), BorderLayout.NORTH);
+        passportNumField = Theme.createTextField(15);
+        pPassNum.add(passportNumField, BorderLayout.CENTER);
+
+        JPanel pPassAuth = new JPanel(new BorderLayout(0, 5));
+        pPassAuth.setOpaque(false);
+        pPassAuth.add(new JLabel("<html>Issuing Authority <font color='red'>*</font></html>"), BorderLayout.NORTH);
+        passportAuthField = Theme.createTextField(15);
+        pPassAuth.add(passportAuthField, BorderLayout.CENTER);
+
+        JPanel pPassIssued = new JPanel(new BorderLayout(0, 5));
+        pPassIssued.setOpaque(false);
+        pPassIssued.add(new JLabel("<html>Date Issued (YYYY/MM/DD) <font color='red'>*</font></html>"),
+                BorderLayout.NORTH);
+        passportIssuedField = Theme.createTextField(15);
+        Theme.setupAutomaticDateField(passportIssuedField);
+        pPassIssued.add(passportIssuedField, BorderLayout.CENTER);
+
+        JPanel pPassExpiry = new JPanel(new BorderLayout(0, 5));
+        pPassExpiry.setOpaque(false);
+        pPassExpiry.add(new JLabel("<html>Validity Date (YYYY/MM/DD) <font color='red'>*</font></html>"),
+                BorderLayout.NORTH);
+        passportExpiryField = Theme.createTextField(15);
+        Theme.setupAutomaticDateField(passportExpiryField);
+        pPassExpiry.add(passportExpiryField, BorderLayout.CENTER);
+
+        passportPanel.add(pPassNum);
+        passportPanel.add(pPassAuth);
+        passportPanel.add(pPassIssued);
+        passportPanel.add(pPassExpiry);
+
+        gbc.gridy = row++;
+        panel.add(passportPanel, gbc);
+
+        gbc.gridy = row++;
+        gbc.insets = new Insets(15, 0, 8, 0);
+        JLabel supportingDocHeader = new JLabel("Supporting Travel Documents (Optional)");
+        supportingDocHeader.setFont(Theme.SUBTITLE_FONT);
+        supportingDocHeader.setForeground(Theme.PRIMARY_BLUE);
+        panel.add(supportingDocHeader, gbc);
+
+        gbc.gridy = row++;
+        gbc.insets = new Insets(8, 0, 8, 0);
+        panel.add(new JSeparator(), gbc);
+
+        String[] docColumns = { "Document Type" };
         docTableModel = new DefaultTableModel(docColumns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -1212,9 +1456,9 @@ class VisaApplicationWizard extends JPanel {
         page2NavPanel.setOpaque(false);
 
         JButton backBtn = Theme.createSecondaryButton("← Back");
-        JButton submitBtn = Theme.createPrimaryButton("Submit Application ✓");
+        JButton nextBtn = Theme.createPrimaryButton("Next Page →");
         page2NavPanel.add(backBtn, BorderLayout.WEST);
-        page2NavPanel.add(submitBtn, BorderLayout.EAST);
+        page2NavPanel.add(nextBtn, BorderLayout.EAST);
 
         panel.add(page2NavPanel, gbc);
 
@@ -1230,12 +1474,186 @@ class VisaApplicationWizard extends JPanel {
         addDocBtn.addActionListener(e -> handleAddDocDialog());
         removeDocBtn.addActionListener(e -> handleRemoveDoc());
         backBtn.addActionListener(e -> wizardCardLayout.show(wizardCardPanel, "PAGE_1"));
+        nextBtn.addActionListener(e -> handlePage2Next());
+
+        JScrollPane scroll = new JScrollPane(panel);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(12);
+        return scroll;
+    }
+
+    private JScrollPane buildPage3Scroll() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Theme.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(8, 0, 8, 0);
+        gbc.gridx = 0;
+        gbc.weightx = 1.0;
+
+        int row = 0;
+
+        gbc.gridy = row++;
+        JLabel sectionTitle = new JLabel("Application Details");
+        sectionTitle.setFont(Theme.SUBTITLE_FONT);
+        sectionTitle.setForeground(Theme.PRIMARY_BLUE);
+        panel.add(sectionTitle, gbc);
+
+        gbc.gridy = row++;
+        panel.add(new JSeparator(), gbc);
+
+        JPanel colPanel1 = new JPanel(new GridLayout(1, 2, 20, 0));
+        colPanel1.setOpaque(false);
+
+        JPanel pEntryType = new JPanel(new BorderLayout(0, 5));
+        pEntryType.setOpaque(false);
+        pEntryType.add(new JLabel("<html>Requested Entry Type <font color='red'>*</font></html>"), BorderLayout.NORTH);
+        entryTypeCombo = new JComboBox<>(new String[] { "Single", "Multiple" });
+        entryTypeCombo.setFont(Theme.REGULAR_FONT);
+        entryTypeCombo.setBackground(Theme.WHITE);
+        pEntryType.add(entryTypeCombo, BorderLayout.CENTER);
+
+        JPanel pLength = new JPanel(new BorderLayout(0, 5));
+        pLength.setOpaque(false);
+        pLength.add(new JLabel("<html>Length of Stay Days <font color='red'>*</font></html>"), BorderLayout.NORTH);
+        lengthOfStayField = Theme.createTextField(15);
+        pLength.add(lengthOfStayField, BorderLayout.CENTER);
+
+        colPanel1.add(pEntryType);
+        colPanel1.add(pLength);
+        gbc.gridy = row++;
+        panel.add(colPanel1, gbc);
+
+        JPanel colPanel2 = new JPanel(new GridLayout(1, 2, 20, 0));
+        colPanel2.setOpaque(false);
+
+        JPanel pPort = new JPanel(new BorderLayout(0, 5));
+        pPort.setOpaque(false);
+        pPort.add(new JLabel("<html>Port Of Entry <font color='red'>*</font></html>"), BorderLayout.NORTH);
+        portOfEntryCombo = new JComboBox<>(new String[] { "NAIA 1", "NAIA 2", "NAIA 3", "NAIA 4" });
+        portOfEntryCombo.setFont(Theme.REGULAR_FONT);
+        portOfEntryCombo.setBackground(Theme.WHITE);
+        pPort.add(portOfEntryCombo, BorderLayout.CENTER);
+
+        JPanel pDest = new JPanel(new BorderLayout(0, 5));
+        pDest.setOpaque(false);
+        pDest.add(new JLabel("<html>Destination After Philippines <font color='red'>*</font></html>"),
+                BorderLayout.NORTH);
+        destinationAfterField = Theme.createTextField(15);
+        pDest.add(destinationAfterField, BorderLayout.CENTER);
+
+        colPanel2.add(pPort);
+        colPanel2.add(pDest);
+        gbc.gridy = row++;
+        panel.add(colPanel2, gbc);
+
+        JPanel colPanel3 = new JPanel(new GridLayout(1, 2, 20, 0));
+        colPanel3.setOpaque(false);
+
+        JPanel pDateApp = new JPanel(new BorderLayout(0, 5));
+        pDateApp.setOpaque(false);
+        pDateApp.add(new JLabel("<html>Date of Application (YYYY/MM/DD) <font color='red'>*</font></html>"),
+                BorderLayout.NORTH);
+        dateOfAppField = Theme.createTextField(15);
+        Theme.setupAutomaticDateField(dateOfAppField);
+        pDateApp.add(dateOfAppField, BorderLayout.CENTER);
+
+        colPanel3.add(pDateApp);
+        colPanel3.add(new JPanel() {
+            {
+                setOpaque(false);
+            }
+        });
+        gbc.gridy = row++;
+        panel.add(colPanel3, gbc);
+
+        gbc.gridy = row++;
+        panel.add(new JLabel("<html>Purpose Type <font color='red'>*</font></html>"), gbc);
+        gbc.gridy = row++;
+        purposeTypeCombo = new JComboBox<>(new String[] { "Leisure", "Wellness", "Business", "Official Business" });
+        purposeTypeCombo.setFont(Theme.REGULAR_FONT);
+        purposeTypeCombo.setBackground(Theme.WHITE);
+        panel.add(purposeTypeCombo, gbc);
+
+        JPanel colPanel4 = new JPanel(new GridLayout(1, 2, 20, 0));
+        colPanel4.setOpaque(false);
+
+        JPanel pSponsor = new JPanel(new BorderLayout(0, 5));
+        pSponsor.setOpaque(false);
+        pSponsor.add(new JLabel("Sponsor Name (Optional)"), BorderLayout.NORTH);
+        sponsorNameField = Theme.createTextField(15);
+        pSponsor.add(sponsorNameField, BorderLayout.CENTER);
+
+        JPanel pSponsorContact = new JPanel(new BorderLayout(0, 5));
+        pSponsorContact.setOpaque(false);
+        pSponsorContact.add(new JLabel("Sponsor Contact Number (Optional)"), BorderLayout.NORTH);
+        sponsorContactField = Theme.createTextField(15);
+        pSponsorContact.add(sponsorContactField, BorderLayout.CENTER);
+
+        colPanel4.add(pSponsor);
+        colPanel4.add(pSponsorContact);
+        gbc.gridy = row++;
+        panel.add(colPanel4, gbc);
+
+        gbc.gridy = row++;
+        gbc.insets = new Insets(30, 0, 10, 0);
+        JPanel buttonPanel = new JPanel(new BorderLayout());
+        buttonPanel.setOpaque(false);
+
+        JButton backBtn = Theme.createSecondaryButton("← Back");
+        JButton submitBtn = Theme.createPrimaryButton("Submit Application");
+        buttonPanel.add(backBtn, BorderLayout.WEST);
+        buttonPanel.add(submitBtn, BorderLayout.EAST);
+
+        panel.add(buttonPanel, gbc);
+
+        backBtn.addActionListener(e -> wizardCardLayout.show(wizardCardPanel, "PAGE_2"));
         submitBtn.addActionListener(e -> handleSubmit());
 
         JScrollPane scroll = new JScrollPane(panel);
         scroll.setBorder(null);
         scroll.getVerticalScrollBar().setUnitIncrement(12);
         return scroll;
+    }
+
+    private void handlePage2Next() {
+        String passportNum = passportNumField.getText().trim();
+        String passportAuth = passportAuthField.getText().trim();
+        String passportIssued = passportIssuedField.getText().trim();
+        String passportExpiry = passportExpiryField.getText().trim();
+
+        if (passportNum.isEmpty() || passportAuth.isEmpty() || passportIssued.isEmpty() || passportExpiry.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all required Passport fields on Page 2.",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidDateString(passportIssued)) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid Passport Issue Date in YYYY/MM/DD format (valid month and days).",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidDateString(passportExpiry)) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid Passport Validity Date in YYYY/MM/DD format (valid month and days).",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (passportExpiry.compareTo(passportIssued) <= 0) {
+            JOptionPane.showMessageDialog(this, "Passport Validity Date must be after Date Issued.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        wizardCardLayout.show(wizardCardPanel, "PAGE_3");
     }
 
     private void handleNextPage() {
@@ -1249,17 +1667,21 @@ class VisaApplicationWizard extends JPanel {
 
         if (name.isEmpty() || citizenship.isEmpty() || bDate.isEmpty() || bPlace.isEmpty() ||
                 email.isEmpty() || contact.isEmpty() || address.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please fill in all required fields on Page 1.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please fill in all required fields on Page 1.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        if (!bDate.matches("\\d{4}/\\d{2}/\\d{2}")) {
-            JOptionPane.showMessageDialog(this, "Please enter the Birth Date in YYYY/MM/DD format.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+        if (!Theme.isValidDateString(bDate)) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid Birth Date in YYYY/MM/DD format (valid month and days).", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         if (!email.contains("@") || !email.contains(".")) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1276,20 +1698,23 @@ class VisaApplicationWizard extends JPanel {
         inputPanel.add(new JLabel("Child's Age:"));
         inputPanel.add(ageField);
 
-        int result = JOptionPane.showConfirmDialog(this, inputPanel, "Add Child Profile", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(this, inputPanel, "Add Child Profile", JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
         if (result == JOptionPane.OK_OPTION) {
             String cName = nameField.getText().trim();
             String cAgeStr = ageField.getText().trim();
 
             if (cName.isEmpty() || cAgeStr.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Both Child Name and Age are required.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Both Child Name and Age are required.", "Error",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             try {
                 int cAge = Integer.parseInt(cAgeStr);
                 if (cAge < 0 || cAge > 18) {
-                    JOptionPane.showMessageDialog(this, "Child age must be between 0 and 18.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Child age must be between 0 and 18.", "Error",
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -1297,7 +1722,8 @@ class VisaApplicationWizard extends JPanel {
                 tempChildrenList.add(child);
                 childrenListModel.addElement(child.getName() + " (Age: " + child.getAge() + ")");
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid number for Age.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please enter a valid number for Age.", "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -1308,81 +1734,25 @@ class VisaApplicationWizard extends JPanel {
             tempChildrenList.remove(index);
             childrenListModel.remove(index);
         } else {
-            JOptionPane.showMessageDialog(this, "Select a child from the list to remove.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Select a child from the list to remove.", "Info",
+                    JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
     private void handleAddDocDialog() {
-        JComboBox<String> typeCombo = new JComboBox<>(new String[]{"Original Passport", "Air Ticket", "Invitation Letter", "Bank Certificate"});
+        JComboBox<String> typeCombo = new JComboBox<>(
+                new String[] { "Air Ticket", "Invitation Letter", "Bank Certificate" });
         typeCombo.setFont(Theme.REGULAR_FONT);
         typeCombo.setBackground(Theme.WHITE);
 
-        JTextField numField = Theme.createTextField(15);
-        JTextField authField = Theme.createTextField(15);
-        JTextField issuedField = Theme.createTextField(10);
-        JTextField expiryField = Theme.createTextField(10);
-
-        JPanel pPassportInfo = new JPanel(new GridLayout(4, 2, 5, 5));
-        pPassportInfo.add(new JLabel("Passport Number:"));
-        pPassportInfo.add(numField);
-        pPassportInfo.add(new JLabel("Issuing Authority:"));
-        pPassportInfo.add(authField);
-        pPassportInfo.add(new JLabel("Date Issued (YYYY/MM/DD):"));
-        pPassportInfo.add(issuedField);
-        pPassportInfo.add(new JLabel("Validity Date (YYYY/MM/DD):"));
-        pPassportInfo.add(expiryField);
-
-        typeCombo.addActionListener(e -> {
-            boolean isPassport = "Original Passport".equals(typeCombo.getSelectedItem());
-            numField.setEnabled(isPassport);
-            authField.setEnabled(isPassport);
-            issuedField.setEnabled(isPassport);
-            expiryField.setEnabled(isPassport);
-        });
-
-        boolean isPassport = "Original Passport".equals(typeCombo.getSelectedItem());
-        numField.setEnabled(isPassport);
-        authField.setEnabled(isPassport);
-        issuedField.setEnabled(isPassport);
-        expiryField.setEnabled(isPassport);
-
-        JPanel dialogPanel = new JPanel(new BorderLayout(10, 10));
-        dialogPanel.add(typeCombo, BorderLayout.NORTH);
-        dialogPanel.add(pPassportInfo, BorderLayout.CENTER);
-
-        int result = JOptionPane.showConfirmDialog(this, dialogPanel, "Add Travel Document Attachment", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(this, typeCombo, "Select Supporting Document Type",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (result == JOptionPane.OK_OPTION) {
             String selectedType = (String) typeCombo.getSelectedItem();
-            String passNum = "";
-            String passAuth = "";
-            String dateIssued = "";
-            String dateValid = "";
-
-            if ("Original Passport".equals(selectedType)) {
-                passNum = numField.getText().trim();
-                passAuth = authField.getText().trim();
-                dateIssued = issuedField.getText().trim();
-                dateValid = expiryField.getText().trim();
-
-                if (passNum.isEmpty() || passAuth.isEmpty() || dateIssued.isEmpty() || dateValid.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Passport fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                if (!dateIssued.matches("\\d{4}/\\d{2}/\\d{2}") || !dateValid.matches("\\d{4}/\\d{2}/\\d{2}")) {
-                    JOptionPane.showMessageDialog(this, "Please enter date parameters in YYYY/MM/DD format.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            }
-
-            Document doc = new Document(selectedType, passNum, passAuth, dateIssued, dateValid);
+            Document doc = new Document(selectedType, "", "", "", "");
             tempDocList.add(doc);
-            docTableModel.addRow(new Object[]{
-                    doc.getDocumentType(),
-                    doc.getPassportNumber().isEmpty() ? "N/A" : doc.getPassportNumber(),
-                    doc.getIssuingAuthority().isEmpty() ? "N/A" : doc.getIssuingAuthority(),
-                    doc.getDateIssued().isEmpty() ? "N/A" : doc.getDateIssued(),
-                    doc.getValidityDate().isEmpty() ? "N/A" : doc.getValidityDate()
+            docTableModel.addRow(new Object[] {
+                    doc.getDocumentType()
             });
         }
     }
@@ -1393,20 +1763,137 @@ class VisaApplicationWizard extends JPanel {
             tempDocList.remove(row);
             docTableModel.removeRow(row);
         } else {
-            JOptionPane.showMessageDialog(this, "Select a document from the table to remove.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Select a document from the table to remove.", "Info",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private int calculateAge(String birthDateStr, String appDateStr) {
+        try {
+            String[] bParts = birthDateStr.split("/");
+            String[] aParts = appDateStr.split("/");
+
+            int bYear = Integer.parseInt(bParts[0]);
+            int bMonth = Integer.parseInt(bParts[1]);
+            int bDay = Integer.parseInt(bParts[2]);
+
+            int aYear = Integer.parseInt(aParts[0]);
+            int aMonth = Integer.parseInt(aParts[1]);
+            int aDay = Integer.parseInt(aParts[2]);
+
+            int age = aYear - bYear;
+            if (aMonth < bMonth || (aMonth == bMonth && aDay < bDay)) {
+                age--;
+            }
+            return age;
+        } catch (Exception e) {
+            return -1;
         }
     }
 
     private void handleSubmit() {
-        if (tempDocList.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Travel Information is Required: Please add at least one Document.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+        // Validation check for Page 1, 2, 3
+        String name = fullNameField.getText().trim();
+        String citizenship = citizenshipField.getText().trim();
+        String bDate = birthDateField.getText().trim();
+        String bPlace = birthPlaceField.getText().trim();
+        String email = emailField.getText().trim();
+        String contact = contactField.getText().trim();
+        String address = addressField.getText().trim();
+
+        if (name.isEmpty() || citizenship.isEmpty() || bDate.isEmpty() || bPlace.isEmpty() ||
+                email.isEmpty() || contact.isEmpty() || address.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all required fields on Page 1.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidDateString(bDate)) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid Birth Date in YYYY/MM/DD format (valid month and days).", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String passportNum = passportNumField.getText().trim();
+        String passportAuth = passportAuthField.getText().trim();
+        String passportIssued = passportIssuedField.getText().trim();
+        String passportExpiry = passportExpiryField.getText().trim();
+
+        if (passportNum.isEmpty() || passportAuth.isEmpty() || passportIssued.isEmpty() || passportExpiry.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all required Passport fields on Page 2.",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidDateString(passportIssued)) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid Passport Issue Date in YYYY/MM/DD format (valid month and days).",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidDateString(passportExpiry)) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid Passport Validity Date in YYYY/MM/DD format (valid month and days).",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (passportExpiry.compareTo(passportIssued) <= 0) {
+            JOptionPane.showMessageDialog(this, "Passport Validity Date must be after Date Issued.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String lenStr = lengthOfStayField.getText().trim();
+        String dest = destinationAfterField.getText().trim();
+        String appDate = dateOfAppField.getText().trim();
+
+        if (lenStr.isEmpty() || dest.isEmpty() || appDate.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all required fields on Page 3.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int lengthOfStay = 0;
+        try {
+            lengthOfStay = Integer.parseInt(lenStr);
+            if (lengthOfStay <= 0) {
+                JOptionPane.showMessageDialog(this, "Length of Stay Days must be a positive number.",
+                        "Validation Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid number for Length of Stay Days.",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidDateString(appDate)) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid Date of Application in YYYY/MM/DD format (valid month and days).",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int ageUponApp = calculateAge(bDate, appDate);
+        if (ageUponApp < 0) {
+            JOptionPane.showMessageDialog(this, "Date of Application cannot be before Birth Date.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         VisaApplication app = new VisaApplication();
         app.setId(editingAppId);
         app.setUserId(currentUserId);
-        
+
         app.setFullName(fullNameField.getText().trim());
         app.setSex((String) sexCombo.getSelectedItem());
         app.setCitizenship(citizenshipField.getText().trim());
@@ -1421,7 +1908,7 @@ class VisaApplicationWizard extends JPanel {
         app.setMotherName(motherField.getText().trim());
         app.setSpouseName(spouseField.getText().trim());
         app.setWithChildren("Yes".equals(withChildrenCombo.getSelectedItem()));
-        
+
         if (app.isWithChildren()) {
             app.setChildren(tempChildrenList);
         } else {
@@ -1430,37 +1917,53 @@ class VisaApplicationWizard extends JPanel {
 
         app.setOccupation(occupationField.getText().trim());
         app.setEmployerAddress(employerField.getText().trim());
-        app.setDocuments(tempDocList);
+
+        // Build document list: required Passport + other supporting documents
+        List<Document> finalDocsList = new ArrayList<>();
+        finalDocsList.add(new Document("Original Passport", passportNum, passportAuth, passportIssued, passportExpiry));
+        finalDocsList.addAll(tempDocList);
+        app.setDocuments(finalDocsList);
+
+        // Set application details
+        app.setEntryType((String) entryTypeCombo.getSelectedItem());
+        app.setLengthOfStay(lengthOfStay);
+        app.setPortOfEntry((String) portOfEntryCombo.getSelectedItem());
+        app.setDestinationAfter(dest);
+        app.setAgeUponApp(ageUponApp);
+        app.setDateOfApp(appDate);
+        app.setPurposeType((String) purposeTypeCombo.getSelectedItem());
+        app.setSponsorName(sponsorNameField.getText().trim());
+        app.setSponsorContact(sponsorContactField.getText().trim());
+
         app.setStatus("PENDING");
 
         boolean success;
         DatabaseManager db = DatabaseManager.getInstance();
         if (editingAppId == -1) {
-        success = db.saveApplication(app);
-        // OOP Demo: build Applicant model and pass through BackendBridge
-        com.visa.app.model.Applicant oopApplicant = new com.visa.app.model.Applicant(
-            splitName(app.getFullName(), true),
-            splitName(app.getFullName(), false),
-            app.getBirthDate(), app.getEmail(),
-            app.getContactNumber(), app.getSex(),
-            app.getCitizenship(), app.getCivilStatus(),
-            app.getPlaceOfBirth(), app.getHomeAddress()
-        );
+            success = db.saveApplication(app);
+            // OOP Demo: build Applicant model and pass through BackendBridge
+            com.visa.app.model.Applicant oopApplicant = new com.visa.app.model.Applicant(
+                    splitName(app.getFullName(), true),
+                    splitName(app.getFullName(), false),
+                    app.getBirthDate(), app.getEmail(),
+                    app.getContactNumber(), app.getSex(),
+                    app.getCitizenship(), app.getCivilStatus(),
+                    app.getPlaceOfBirth(), app.getHomeAddress());
             System.out.println("[OOP] " + oopApplicant.getProfileSummary());
-            } else {
+        } else {
             success = db.updateApplication(app);
-            }
+        }
 
         if (success) {
-            String message = editingAppId == -1 ? 
-                    "Your Visa Application has been submitted successfully!" : 
-                    "Your Visa Application details have been updated successfully!";
+            String message = editingAppId == -1 ? "Your Visa Application has been submitted successfully!"
+                    : "Your Visa Application details have been updated successfully!";
             JOptionPane.showMessageDialog(this, message, "Submission Successful", JOptionPane.INFORMATION_MESSAGE);
             resetForm();
             mainFrame.refreshDashboard();
             mainFrame.showPanel("DASHBOARD");
         } else {
-            JOptionPane.showMessageDialog(this, "Error saving application details to database.", "Submission Failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error saving application details to database.", "Submission Failed",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1492,17 +1995,35 @@ class VisaApplicationWizard extends JPanel {
         occupationField.setText(app.getOccupation());
         employerField.setText(app.getEmployerAddress());
 
-        tempDocList.addAll(app.getDocuments());
+        passportNumField.setText("");
+        passportAuthField.setText("");
+        passportIssuedField.setText("");
+        passportExpiryField.setText("");
+        tempDocList.clear();
+        docTableModel.setRowCount(0);
+
         for (Document doc : app.getDocuments()) {
-            docTableModel.addRow(new Object[]{
-                    doc.getDocumentType(),
-                    doc.getPassportNumber().isEmpty() ? "N/A" : doc.getPassportNumber(),
-                    doc.getIssuingAuthority().isEmpty() ? "N/A" : doc.getIssuingAuthority(),
-                    doc.getDateIssued().isEmpty() ? "N/A" : doc.getDateIssued(),
-                    doc.getValidityDate().isEmpty() ? "N/A" : doc.getValidityDate()
-            });
+            if ("Original Passport".equalsIgnoreCase(doc.getDocumentType())) {
+                passportNumField.setText(doc.getPassportNumber());
+                passportAuthField.setText(doc.getIssuingAuthority());
+                passportIssuedField.setText(doc.getDateIssued());
+                passportExpiryField.setText(doc.getValidityDate());
+            } else {
+                tempDocList.add(doc);
+                docTableModel.addRow(new Object[] { doc.getDocumentType() });
+            }
         }
-        
+
+        // Set application details
+        entryTypeCombo.setSelectedItem(app.getEntryType());
+        lengthOfStayField.setText(String.valueOf(app.getLengthOfStay()));
+        portOfEntryCombo.setSelectedItem(app.getPortOfEntry());
+        destinationAfterField.setText(app.getDestinationAfter());
+        dateOfAppField.setText(app.getDateOfApp());
+        purposeTypeCombo.setSelectedItem(app.getPurposeType());
+        sponsorNameField.setText(app.getSponsorName());
+        sponsorContactField.setText(app.getSponsorContact());
+
         childrenSection.setVisible(app.isWithChildren());
         wizardCardLayout.show(wizardCardPanel, "PAGE_1");
     }
@@ -1532,17 +2053,32 @@ class VisaApplicationWizard extends JPanel {
         occupationField.setText("");
         employerField.setText("");
 
+        passportNumField.setText("");
+        passportAuthField.setText("");
+        passportIssuedField.setText("");
+        passportExpiryField.setText("");
         docTableModel.setRowCount(0);
         tempDocList.clear();
+
+        // Reset application details
+        entryTypeCombo.setSelectedIndex(0);
+        lengthOfStayField.setText("");
+        portOfEntryCombo.setSelectedIndex(0);
+        destinationAfterField.setText("");
+        dateOfAppField.setText("");
+        purposeTypeCombo.setSelectedIndex(0);
+        sponsorNameField.setText("");
+        sponsorContactField.setText("");
 
         wizardCardLayout.show(wizardCardPanel, "PAGE_1");
     }
 
     private String splitName(String fullName, boolean firstPart) {
-    if (fullName == null || !fullName.contains(" ")) return fullName == null ? "" : fullName;
-    return firstPart
-        ? fullName.substring(0, fullName.indexOf(' '))
-        : fullName.substring(fullName.indexOf(' ') + 1);
+        if (fullName == null || !fullName.contains(" "))
+            return fullName == null ? "" : fullName;
+        return firstPart
+                ? fullName.substring(0, fullName.indexOf(' '))
+                : fullName.substring(fullName.indexOf(' ') + 1);
     }
 }
 
@@ -1569,8 +2105,7 @@ class ApplicantDashboardPanel extends JPanel {
         topPanel.setBackground(Theme.WHITE);
         topPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.BORDER_COLOR),
-                BorderFactory.createEmptyBorder(15, 20, 15, 20)
-        ));
+                BorderFactory.createEmptyBorder(15, 20, 15, 20)));
 
         JLabel welcomeLabel = new JLabel("Welcome back, " + currentUser.getEmail());
         welcomeLabel.setFont(Theme.SUBTITLE_FONT);
@@ -1592,7 +2127,7 @@ class ApplicantDashboardPanel extends JPanel {
         tableTitle.setForeground(Theme.TEXT_DARK);
         tableContainer.add(tableTitle, BorderLayout.NORTH);
 
-        String[] columns = {"ID", "Full Name", "Citizenship", "Submission Date/Birth Date", "Status"};
+        String[] columns = { "ID", "Full Name", "Citizenship", "Submission Date/Birth Date", "Status" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -1607,12 +2142,12 @@ class ApplicantDashboardPanel extends JPanel {
         appTable.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                           boolean hasFocus, int row, int column) {
+                    boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 String status = (String) value;
                 setFont(Theme.BOLD_FONT);
                 setHorizontalAlignment(SwingConstants.CENTER);
-                
+
                 if (!isSelected) {
                     if ("APPROVED".equalsIgnoreCase(status)) {
                         c.setForeground(Theme.STATUS_APPROVED);
@@ -1665,7 +2200,7 @@ class ApplicantDashboardPanel extends JPanel {
         userAppsList = DatabaseManager.getInstance().getApplicationsByUserId(currentUser.getId());
         BackendBridge.getInstance().getApplicantsWithPassportDetails(); // Q9: 3-table JOIN
         for (VisaApplication app : userAppsList) {
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     app.getId(),
                     app.getFullName(),
                     app.getCitizenship(),
@@ -1685,7 +2220,8 @@ class ApplicantDashboardPanel extends JPanel {
                 }
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Please select an application from the table.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select an application from the table.", "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
         }
         return null;
     }
@@ -1701,7 +2237,8 @@ class ApplicantDashboardPanel extends JPanel {
         VisaApplication app = getSelectedApplication();
         if (app != null) {
             if (!"PENDING".equalsIgnoreCase(app.getStatus())) {
-                JOptionPane.showMessageDialog(this, "Only pending applications can be modified.", "Access Denied", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Only pending applications can be modified.", "Access Denied",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
             mainFrame.editApplication(app);
@@ -1716,16 +2253,17 @@ class ApplicantDashboardPanel extends JPanel {
                     "Are you sure you want to delete this visa application? This action cannot be undone.",
                     "Confirm Deletion",
                     JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE
-            );
+                    JOptionPane.WARNING_MESSAGE);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 boolean success = DatabaseManager.getInstance().deleteApplication(app.getId());
                 if (success) {
-                    JOptionPane.showMessageDialog(this, "Application removed successfully.", "Deleted", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Application removed successfully.", "Deleted",
+                            JOptionPane.INFORMATION_MESSAGE);
                     refreshData();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Failed to delete from database.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Failed to delete from database.", "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -1743,14 +2281,15 @@ class ApplicantDashboardPanel extends JPanel {
                 File fileToSave = fileChooser.getSelectedFile();
                 boolean success = XMLManager.exportApplicationToXML(app, fileToSave);
                 if (success) {
-                    JOptionPane.showMessageDialog(this, "Application successfully saved to:\n" + fileToSave.getAbsolutePath(), "XML Export Complete", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this,
+                            "Application successfully saved to:\n" + fileToSave.getAbsolutePath(),
+                            "XML Export Complete", JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(this, "Export operation failed.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
     }
-
 
 }
 
@@ -1775,8 +2314,7 @@ class AdminDashboardPanel extends JPanel {
         topPanel.setBackground(Theme.WHITE);
         topPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.BORDER_COLOR),
-                BorderFactory.createEmptyBorder(15, 20, 15, 20)
-        ));
+                BorderFactory.createEmptyBorder(15, 20, 15, 20)));
 
         JLabel welcomeLabel = new JLabel("Administrator Dashboard");
         welcomeLabel.setFont(Theme.SUBTITLE_FONT);
@@ -1793,7 +2331,7 @@ class AdminDashboardPanel extends JPanel {
         tableTitle.setForeground(Theme.TEXT_DARK);
         tableContainer.add(tableTitle, BorderLayout.NORTH);
 
-        String[] columns = {"ID", "Email", "Full Name", "Citizenship", "Birth Date", "Status"};
+        String[] columns = { "ID", "Email", "Full Name", "Citizenship", "Date of Application", "Status" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -1808,12 +2346,12 @@ class AdminDashboardPanel extends JPanel {
         appTable.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                           boolean hasFocus, int row, int column) {
+                    boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 String status = (String) value;
                 setFont(Theme.BOLD_FONT);
                 setHorizontalAlignment(SwingConstants.CENTER);
-                
+
                 if (!isSelected) {
                     if ("APPROVED".equalsIgnoreCase(status)) {
                         c.setForeground(Theme.STATUS_APPROVED);
@@ -1838,11 +2376,11 @@ class AdminDashboardPanel extends JPanel {
         Theme.setComponentSizes(sidebar, 200, 300);
 
         JButton viewBtn = Theme.createPrimaryButton("View Full Details");
-        JButton approveBtn = Theme.createButton("Approve Visa ✓", Theme.STATUS_APPROVED, Theme.WHITE);
-        JButton denyBtn = Theme.createDangerButton("Deny Visa ✗");
+        JButton approveBtn = Theme.createButton("Approve Visa", Theme.STATUS_APPROVED, Theme.WHITE);
+        JButton denyBtn = Theme.createDangerButton("Deny Visa");
         JButton deleteBtn = Theme.createSecondaryButton("Delete Record");
         JButton exportBtn = Theme.createSecondaryButton("Export All to XML");
-        JButton refreshBtn = Theme.createSecondaryButton("Refresh List ↻");
+        JButton refreshBtn = Theme.createSecondaryButton("Refresh List");
 
         sidebar.add(viewBtn);
         sidebar.add(approveBtn);
@@ -1868,12 +2406,12 @@ class AdminDashboardPanel extends JPanel {
         applicationsList = DatabaseManager.getInstance().getAllApplications();
         BackendBridge.getInstance().getApplicationsWithDocumentCount(); // Q6: JOIN + COUNT
         for (VisaApplication app : applicationsList) {
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     app.getId(),
                     app.getEmail(),
                     app.getFullName(),
                     app.getCitizenship(),
-                    app.getBirthDate(),
+                    app.getDateOfApp(),
                     app.getStatus()
             });
         }
@@ -1889,7 +2427,8 @@ class AdminDashboardPanel extends JPanel {
                 }
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Please select a submission from the table.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a submission from the table.", "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
         }
         return null;
     }
@@ -1909,19 +2448,20 @@ class AdminDashboardPanel extends JPanel {
                     "Are you sure you want to mark Visa Application #" + app.getId() + " as " + status + "?",
                     "Confirm Status Update",
                     JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE
-            );
+                    JOptionPane.QUESTION_MESSAGE);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 boolean success = BackendBridge.getInstance().approveApplication(app.getId());
                 if ("DENIED".equalsIgnoreCase(status)) {
-                success = BackendBridge.getInstance().denyApplication(app.getId());
+                    success = BackendBridge.getInstance().denyApplication(app.getId());
                 }
                 if (success) {
-                    JOptionPane.showMessageDialog(this, "Application status successfully updated to " + status + ".", "Status Updated", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Application status successfully updated to " + status + ".",
+                            "Status Updated", JOptionPane.INFORMATION_MESSAGE);
                     refreshData();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Failed to update status in the database.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Failed to update status in the database.", "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -1932,16 +2472,17 @@ class AdminDashboardPanel extends JPanel {
         if (app != null) {
             int confirm = JOptionPane.showConfirmDialog(
                     this,
-                    "Are you sure you want to permanently delete Visa Application #" + app.getId() + "?\nThis deletes all related travel docs and children.",
+                    "Are you sure you want to permanently delete Visa Application #" + app.getId()
+                            + "?\nThis deletes all related travel docs and children.",
                     "Confirm Record Deletion",
                     JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE
-            );
+                    JOptionPane.WARNING_MESSAGE);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 boolean success = DatabaseManager.getInstance().deleteApplication(app.getId());
                 if (success) {
-                    JOptionPane.showMessageDialog(this, "Record successfully deleted.", "Record Removed", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Record successfully deleted.", "Record Removed",
+                            JOptionPane.INFORMATION_MESSAGE);
                     refreshData();
                 } else {
                     JOptionPane.showMessageDialog(this, "Failed to delete record.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -1965,12 +2506,13 @@ class AdminDashboardPanel extends JPanel {
             File fileToSave = fileChooser.getSelectedFile();
             boolean success = XMLManager.exportAllApplicationsToXML(applicationsList, fileToSave);
             if (success) {
-                JOptionPane.showMessageDialog(this, "Successfully exported all applications to:\n" + fileToSave.getAbsolutePath(), "XML Bulk Export Complete", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Successfully exported all applications to:\n" + fileToSave.getAbsolutePath(),
+                        "XML Bulk Export Complete", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(this, "Export operation failed.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
-
 
 }
