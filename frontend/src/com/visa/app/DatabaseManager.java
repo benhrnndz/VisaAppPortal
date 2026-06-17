@@ -35,7 +35,14 @@ public class DatabaseManager {
 
     private void initializeDatabase() {
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            // Create Users Table
+
+            // Enable foreign key enforcement in SQLite
+            stmt.execute("PRAGMA foreign_keys = ON;");
+
+            // -------------------------------------------------------------------
+            // TABLE 1: users
+            // Stores login credentials. Role is either 'APPLICANT' or 'ADMIN'.
+            // -------------------------------------------------------------------
             stmt.execute("CREATE TABLE IF NOT EXISTS users (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "email TEXT UNIQUE NOT NULL," +
@@ -43,78 +50,92 @@ public class DatabaseManager {
                     "role TEXT NOT NULL" +
                     ");");
 
-            // Create Applications Table
-            stmt.execute("CREATE TABLE IF NOT EXISTS applications (" +
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+            // -------------------------------------------------------------------
+            // TABLE 2: passports
+            // Stores passport details independently (no FK to application).
+            // passport_no is the natural primary key.
+            // Referenced by applications.passport_no.
+            // -------------------------------------------------------------------
+            stmt.execute("CREATE TABLE IF NOT EXISTS passports (" +
+                    "passport_no TEXT PRIMARY KEY," +
+                    "issued_by TEXT NOT NULL," +
+                    "date_of_issue TEXT NOT NULL," +
+                    "valid_until TEXT NOT NULL" +
+                    ");");
+
+            // -------------------------------------------------------------------
+            // TABLE 3: applicants
+            // Stores personal information about the visa applicant.
+            // FK: user_id → users(id)
+            // -------------------------------------------------------------------
+            stmt.execute("CREATE TABLE IF NOT EXISTS applicants (" +
+                    "applicant_id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "user_id INTEGER NOT NULL," +
-                    "full_name TEXT NOT NULL," +
+                    "name TEXT NOT NULL," +
                     "sex TEXT NOT NULL," +
                     "citizenship TEXT NOT NULL," +
-                    "civil_status TEXT NOT NULL," +
-                    "birth_date TEXT NOT NULL," +
+                    "date_of_birth TEXT NOT NULL," +
                     "place_of_birth TEXT NOT NULL," +
-                    "email TEXT NOT NULL," +
-                    "contact_number TEXT NOT NULL," +
+                    "contact_no TEXT NOT NULL," +
                     "home_address TEXT NOT NULL," +
+                    "civil_status TEXT NOT NULL," +
+                    "spouse_name TEXT," +
+                    "occupation TEXT," +
+                    "employer_office_and_address TEXT," +
                     "father_name TEXT," +
                     "mother_name TEXT," +
-                    "spouse_name TEXT," +
-                    "with_children INTEGER," +
-                    "occupation TEXT," +
-                    "employer_address TEXT," +
-                    "status TEXT NOT NULL," +
                     "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE" +
                     ");");
 
-            // Create Children Table
-            stmt.execute("CREATE TABLE IF NOT EXISTS children (" +
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    "application_id INTEGER NOT NULL," +
-                    "name TEXT NOT NULL," +
-                    "age INTEGER NOT NULL," +
-                    "FOREIGN KEY(application_id) REFERENCES applications(id) ON DELETE CASCADE" +
+            // -------------------------------------------------------------------
+            // TABLE 4: applications
+            // Stores visa application/travel details.
+            // FK: applicant_id → applicants(applicant_id)
+            // FK: passport_no  → passports(passport_no)
+            // -------------------------------------------------------------------
+            stmt.execute("CREATE TABLE IF NOT EXISTS applications (" +
+                    "application_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "applicant_id INTEGER NOT NULL," +
+                    "passport_no TEXT NOT NULL," +
+                    "requested_entry_type TEXT NOT NULL," +
+                    "length_of_stay_days INTEGER NOT NULL," +
+                    "port_of_entry TEXT NOT NULL," +
+                    "dest_after_ph TEXT," +
+                    "age_upon_application INTEGER NOT NULL," +
+                    "date_of_application TEXT NOT NULL," +
+                    "purpose_type TEXT NOT NULL," +
+                    "sponsor_name TEXT," +
+                    "spon_contact_no TEXT," +
+                    "status TEXT NOT NULL DEFAULT 'PENDING'," +
+                    "FOREIGN KEY(applicant_id) REFERENCES applicants(applicant_id) ON DELETE CASCADE," +
+                    "FOREIGN KEY(passport_no)  REFERENCES passports(passport_no)" +
                     ");");
 
-            // Create Documents Table
+            // -------------------------------------------------------------------
+            // TABLE 5: children
+            // Stores children of an applicant.
+            // FK: applicant_id → applicants(applicant_id)
+            // -------------------------------------------------------------------
+            stmt.execute("CREATE TABLE IF NOT EXISTS children (" +
+                    "child_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "applicant_id INTEGER NOT NULL," +
+                    "child_name TEXT NOT NULL," +
+                    "child_age INTEGER NOT NULL," +
+                    "FOREIGN KEY(applicant_id) REFERENCES applicants(applicant_id) ON DELETE CASCADE" +
+                    ");");
+
+            // -------------------------------------------------------------------
+            // TABLE 6: documents
+            // Stores supporting travel documents per application.
+            // Only holds document_type — passport details are in passports table.
+            // FK: application_id → applications(application_id)
+            // -------------------------------------------------------------------
             stmt.execute("CREATE TABLE IF NOT EXISTS documents (" +
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "document_id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "application_id INTEGER NOT NULL," +
                     "document_type TEXT NOT NULL," +
-                    "passport_number TEXT," +
-                    "issuing_authority TEXT," +
-                    "date_issued TEXT," +
-                    "validity_date TEXT," +
-                    "FOREIGN KEY(application_id) REFERENCES applications(id) ON DELETE CASCADE" +
+                    "FOREIGN KEY(application_id) REFERENCES applications(application_id) ON DELETE CASCADE" +
                     ");");
-
-            // Migrate table schema to add the new fields if they don't exist
-            String[] newColumns = {
-                "entry_type TEXT",
-                "length_of_stay INTEGER",
-                "port_of_entry TEXT",
-                "destination_after TEXT",
-                "age_upon_app INTEGER",
-                "date_of_app TEXT",
-                "purpose_type TEXT",
-                "sponsor_name TEXT",
-                "sponsor_contact TEXT"
-            };
-            
-            for (String col : newColumns) {
-                String colName = col.split(" ")[0];
-                try (Statement testStmt = conn.createStatement()) {
-                    // Check if column exists
-                    testStmt.execute("SELECT " + colName + " FROM applications LIMIT 1;");
-                } catch (SQLException e) {
-                    // Column doesn't exist, add it
-                    try (Statement alterStmt = conn.createStatement()) {
-                        alterStmt.execute("ALTER TABLE applications ADD COLUMN " + col + ";");
-                        System.out.println("Migrated: Added column " + colName + " to applications table.");
-                    } catch (SQLException ex) {
-                        System.err.println("Error adding column " + colName + ": " + ex.getMessage());
-                    }
-                }
-            }
 
             // Seed Default Users
             seedDefaultUsers(conn);
