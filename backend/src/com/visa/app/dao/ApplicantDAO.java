@@ -2,7 +2,6 @@ package com.visa.app.dao;
 
 import com.visa.app.model.Applicant;
 import com.visa.app.utils.DatabaseConnection;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

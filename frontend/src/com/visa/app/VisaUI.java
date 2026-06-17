@@ -290,6 +290,15 @@ class Theme {
         }
     }
 
+    //For bdate na exceed cur date
+    public static boolean isFutureDate(String dateStr) {
+    if (!isValidDateString(dateStr)) return false;
+    String[] parts = dateStr.split("/");
+    java.time.LocalDate inputDate = java.time.LocalDate.of(
+        Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+    return inputDate.isAfter(java.time.LocalDate.now());
+    }
+
     public static void setupAutomaticDateField(JTextField textField) {
         textField.addKeyListener(new java.awt.event.KeyAdapter() {
             private boolean isDeleting = false;
@@ -1679,6 +1688,13 @@ class VisaApplicationWizard extends JPanel {
             return;
         }
 
+        if (Theme.isFutureDate(bDate)) {
+            JOptionPane.showMessageDialog(this,
+                "Birth Date cannot be in the future.", "Validation Error",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         if (!email.contains("@") || !email.contains(".")) {
             JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Validation Error",
                     JOptionPane.ERROR_MESSAGE);
@@ -2174,13 +2190,11 @@ class ApplicantDashboardPanel extends JPanel {
         JButton viewBtn = Theme.createPrimaryButton("View Full Details");
         JButton editBtn = Theme.createSecondaryButton("Edit Application");
         JButton deleteBtn = Theme.createDangerButton("Cancel / Delete");
-        JButton exportBtn = Theme.createSecondaryButton("Export to XML 💾");
         JButton refreshBtn = Theme.createSecondaryButton("Refresh List ↻");
 
         sidebar.add(viewBtn);
         sidebar.add(editBtn);
         sidebar.add(deleteBtn);
-        sidebar.add(exportBtn);
         sidebar.add(refreshBtn);
         sidebar.add(new JLabel(""));
 
@@ -2189,7 +2203,6 @@ class ApplicantDashboardPanel extends JPanel {
         viewBtn.addActionListener(e -> handleViewDetails());
         editBtn.addActionListener(e -> handleEditApp());
         deleteBtn.addActionListener(e -> handleDeleteApp());
-        exportBtn.addActionListener(e -> handleExportXML());
         refreshBtn.addActionListener(e -> refreshData());
 
         refreshData();
@@ -2269,27 +2282,7 @@ class ApplicantDashboardPanel extends JPanel {
         }
     }
 
-    private void handleExportXML() {
-        VisaApplication app = getSelectedApplication();
-        if (app != null) {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Export Visa Application XML");
-            fileChooser.setSelectedFile(new File("visa_application_" + app.getId() + ".xml"));
-
-            int userSelection = fileChooser.showSaveDialog(this);
-            if (userSelection == JFileChooser.APPROVE_OPTION) {
-                File fileToSave = fileChooser.getSelectedFile();
-                boolean success = XMLManager.exportApplicationToXML(app, fileToSave);
-                if (success) {
-                    JOptionPane.showMessageDialog(this,
-                            "Application successfully saved to:\n" + fileToSave.getAbsolutePath(),
-                            "XML Export Complete", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Export operation failed.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
-    }
+    
 
 }
 
@@ -2379,14 +2372,12 @@ class AdminDashboardPanel extends JPanel {
         JButton approveBtn = Theme.createButton("Approve Visa", Theme.STATUS_APPROVED, Theme.WHITE);
         JButton denyBtn = Theme.createDangerButton("Deny Visa");
         JButton deleteBtn = Theme.createSecondaryButton("Delete Record");
-        JButton exportBtn = Theme.createSecondaryButton("Export All to XML");
         JButton refreshBtn = Theme.createSecondaryButton("Refresh List");
 
         sidebar.add(viewBtn);
         sidebar.add(approveBtn);
         sidebar.add(denyBtn);
         sidebar.add(deleteBtn);
-        sidebar.add(exportBtn);
         sidebar.add(refreshBtn);
 
         add(sidebar, BorderLayout.EAST);
@@ -2395,7 +2386,6 @@ class AdminDashboardPanel extends JPanel {
         approveBtn.addActionListener(e -> handleUpdateStatus("APPROVED"));
         denyBtn.addActionListener(e -> handleUpdateStatus("DENIED"));
         deleteBtn.addActionListener(e -> handleDeleteRecord());
-        exportBtn.addActionListener(e -> handleExportAllXML());
         refreshBtn.addActionListener(e -> refreshData());
 
         refreshData();
@@ -2491,28 +2481,6 @@ class AdminDashboardPanel extends JPanel {
         }
     }
 
-    private void handleExportAllXML() {
-        if (applicationsList.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No records to export.", "Empty Set", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Bulk Export All Applications to XML");
-        fileChooser.setSelectedFile(new File("all_visa_applications_export.xml"));
-
-        int userSelection = fileChooser.showSaveDialog(this);
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            File fileToSave = fileChooser.getSelectedFile();
-            boolean success = XMLManager.exportAllApplicationsToXML(applicationsList, fileToSave);
-            if (success) {
-                JOptionPane.showMessageDialog(this,
-                        "Successfully exported all applications to:\n" + fileToSave.getAbsolutePath(),
-                        "XML Bulk Export Complete", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "Export operation failed.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
+    
 
 }
