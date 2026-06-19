@@ -1563,10 +1563,12 @@ class VisaApplicationWizard extends JPanel {
 
         JPanel pDateApp = new JPanel(new BorderLayout(0, 5));
         pDateApp.setOpaque(false);
-        pDateApp.add(new JLabel("<html>Date of Application (YYYY/MM/DD) <font color='red'>*</font></html>"),
+        pDateApp.add(new JLabel("Date of Application (auto-filled)"),
                 BorderLayout.NORTH);
         dateOfAppField = Theme.createTextField(15);
-        Theme.setupAutomaticDateField(dateOfAppField);
+        dateOfAppField.setEditable(false);
+        dateOfAppField.setFocusable(false);
+        dateOfAppField.setBackground(Theme.BACKGROUND);
         pDateApp.add(dateOfAppField, BorderLayout.CENTER);
 
         colPanel3.add(pDateApp);
@@ -1867,9 +1869,14 @@ class VisaApplicationWizard extends JPanel {
 
         String lenStr = lengthOfStayField.getText().trim();
         String dest = destinationAfterField.getText().trim();
+        // Date of Application is now system-generated (current date), not user input.
         String appDate = dateOfAppField.getText().trim();
+        if (appDate.isEmpty()) {
+            appDate = java.time.LocalDate.now().toString().replace("-", "/");
+            dateOfAppField.setText(appDate);
+        }
 
-        if (lenStr.isEmpty() || dest.isEmpty() || appDate.isEmpty()) {
+        if (lenStr.isEmpty() || dest.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please fill in all required fields on Page 3.", "Validation Error",
                     JOptionPane.ERROR_MESSAGE);
             return;
@@ -1886,14 +1893,6 @@ class VisaApplicationWizard extends JPanel {
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Please enter a valid number for Length of Stay Days.",
-                    "Validation Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (!Theme.isValidDateString(appDate)) {
-            JOptionPane.showMessageDialog(this,
-                    "Please enter a valid Date of Application in YYYY/MM/DD format (valid month and days).",
                     "Validation Error",
                     JOptionPane.ERROR_MESSAGE);
             return;
@@ -1958,13 +1957,14 @@ class VisaApplicationWizard extends JPanel {
         if (editingAppId == -1) {
             success = db.saveApplication(app);
             // OOP Demo: build Applicant model and pass through BackendBridge
+            // OOP model — 9-param convenience constructor matches Applicant.java
             com.visa.app.model.Applicant oopApplicant = new com.visa.app.model.Applicant(
                     splitName(app.getFullName(), true),
                     splitName(app.getFullName(), false),
-                    app.getBirthDate(), app.getEmail(),
-                    app.getContactNumber(), app.getSex(),
-                    app.getCitizenship(), app.getCivilStatus(),
-                    app.getPlaceOfBirth(), app.getHomeAddress());
+                    app.getBirthDate(), app.getPlaceOfBirth(),
+                    app.getSex(), app.getCitizenship(),
+                    app.getContactNumber(), app.getHomeAddress(),
+                    app.getCivilStatus());
             System.out.println("[OOP] " + oopApplicant.getProfileSummary());
         } else {
             success = db.updateApplication(app);
@@ -2081,7 +2081,7 @@ class VisaApplicationWizard extends JPanel {
         lengthOfStayField.setText("");
         portOfEntryCombo.setSelectedIndex(0);
         destinationAfterField.setText("");
-        dateOfAppField.setText("");
+        dateOfAppField.setText(java.time.LocalDate.now().toString().replace("-", "/"));
         purposeTypeCombo.setSelectedIndex(0);
         sponsorNameField.setText("");
         sponsorContactField.setText("");

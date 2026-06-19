@@ -30,7 +30,15 @@ public class DatabaseManager {
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL);
+        Connection conn = DriverManager.getConnection(DB_URL);
+        // PRAGMA foreign_keys is a per-connection setting in SQLite — it does NOT
+        // persist across connections, so it must be re-enabled here every time,
+        // not just once during initializeDatabase(). Without this, ON DELETE
+        // CASCADE (e.g. documents -> applications) silently never fires.
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("PRAGMA foreign_keys = ON;");
+        }
+        return conn;
     }
 
     private void initializeDatabase() {
@@ -213,192 +221,279 @@ public class DatabaseManager {
 
     // --- Visa Application Operations ---
 
+    /**
+     * Saves a new VisaApplication to the database using the corrected 6-table schema:
+     *
+     *  Flow:
+     *   1. Look up (or create) the applicant row for this user in `applicants`
+     *   2. Insert the passport into `passports` (if document type = Original Passport)
+     *   3. Insert the trip details into `applications`
+     *   4. Insert children into `children` (FK -> applicant_id)
+     *   5. Insert supporting documents into `documents` (FK -> application_id)
+     */
     public boolean saveApplication(VisaApplication app) {
         Connection conn = null;
-        PreparedStatement pstmtApp = null;
-        PreparedStatement pstmtChild = null;
-        PreparedStatement pstmtDoc = null;
-        ResultSet generatedKeys = null;
-
         try {
             conn = getConnection();
-            conn.setAutoCommit(false); // Begin Transaction
+            conn.setAutoCommit(false);
 
-            // 1. Insert Application
-            String sqlApp = "INSERT INTO applications (user_id, full_name, sex, citizenship, civil_status, birth_date, " +
-                    "place_of_birth, email, contact_number, home_address, father_name, mother_name, spouse_name, " +
-                    "with_children, occupation, employer_address, status, " +
-                    "entry_type, length_of_stay, port_of_entry, destination_after, age_upon_app, date_of_app, purpose_type, sponsor_name, sponsor_contact) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            
-            pstmtApp = conn.prepareStatement(sqlApp, Statement.RETURN_GENERATED_KEYS);
-            pstmtApp.setInt(1, app.getUserId());
-            pstmtApp.setString(2, app.getFullName());
-            pstmtApp.setString(3, app.getSex());
-            pstmtApp.setString(4, app.getCitizenship());
-            pstmtApp.setString(5, app.getCivilStatus());
-            pstmtApp.setString(6, app.getBirthDate());
-            pstmtApp.setString(7, app.getPlaceOfBirth());
-            pstmtApp.setString(8, app.getEmail());
-            pstmtApp.setString(9, app.getContactNumber());
-            pstmtApp.setString(10, app.getHomeAddress());
-            pstmtApp.setString(11, app.getFatherName());
-            pstmtApp.setString(12, app.getMotherName());
-            pstmtApp.setString(13, app.getSpouseName());
-            pstmtApp.setBoolean(14, app.isWithChildren());
-            pstmtApp.setString(15, app.getOccupation());
-            pstmtApp.setString(16, app.getEmployerAddress());
-            pstmtApp.setString(17, app.getStatus());
-            pstmtApp.setString(18, app.getEntryType());
-            pstmtApp.setInt(19, app.getLengthOfStay());
-            pstmtApp.setString(20, app.getPortOfEntry());
-            pstmtApp.setString(21, app.getDestinationAfter());
-            pstmtApp.setInt(22, app.getAgeUponApp());
-            pstmtApp.setString(23, app.getDateOfApp());
-            pstmtApp.setString(24, app.getPurposeType());
-            pstmtApp.setString(25, app.getSponsorName());
-            pstmtApp.setString(26, app.getSponsorContact());
-            pstmtApp.executeUpdate();
-
-            generatedKeys = pstmtApp.getGeneratedKeys();
-            int applicationId = -1;
-            if (generatedKeys.next()) {
-                applicationId = generatedKeys.getInt(1);
-                app.setId(applicationId);
-            } else {
-                throw new SQLException("Creating visa application failed, no ID obtained.");
-            }
-
-            // 2. Insert Children
-            if (app.isWithChildren() && app.getChildren() != null) {
-                String sqlChild = "INSERT INTO children (application_id, name, age) VALUES (?, ?, ?)";
-                pstmtChild = conn.prepareStatement(sqlChild);
-                for (Child child : app.getChildren()) {
-                    pstmtChild.setInt(1, applicationId);
-                    pstmtChild.setString(2, child.getName());
-                    pstmtChild.setInt(3, child.getAge());
-                    pstmtChild.executeUpdate();
+            // ── STEP 1: Resolve or create applicant_id ────────────────────────
+            // Check if an applicant row already exists for this user
+            int applicantId = -1;
+            String lookupApplicant = "SELECT applicant_id FROM applicants WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(lookupApplicant)) {
+                ps.setInt(1, app.getUserId());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        applicantId = rs.getInt("applicant_id");
+                    }
                 }
             }
 
-            // 3. Insert Documents
+            if (applicantId == -1) {
+                // First application for this user — create the applicant row
+                String insertApplicant =
+                    "INSERT INTO applicants " +
+                    "(user_id, name, sex, citizenship, date_of_birth, place_of_birth, " +
+                    " contact_no, home_address, civil_status, spouse_name, occupation, " +
+                    " employer_office_and_address, father_name, mother_name) " +
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                try (PreparedStatement ps = conn.prepareStatement(insertApplicant,
+                        Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setInt   (1,  app.getUserId());
+                    ps.setString(2,  app.getFullName());
+                    ps.setString(3,  app.getSex());
+                    ps.setString(4,  app.getCitizenship());
+                    ps.setString(5,  app.getBirthDate());
+                    ps.setString(6,  app.getPlaceOfBirth());
+                    ps.setString(7,  app.getContactNumber());
+                    ps.setString(8,  app.getHomeAddress());
+                    ps.setString(9,  app.getCivilStatus());
+                    ps.setString(10, app.getSpouseName());
+                    ps.setString(11, app.getOccupation());
+                    ps.setString(12, app.getEmployerAddress());
+                    ps.setString(13, app.getFatherName());
+                    ps.setString(14, app.getMotherName());
+                    ps.executeUpdate();
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        if (keys.next()) applicantId = keys.getInt(1);
+                    }
+                }
+            }
+
+            // ── STEP 2: Find the passport document and insert into `passports` ─
+            String passportNo = "N/A-" + app.getUserId();   // fallback if no passport doc
             if (app.getDocuments() != null) {
-                String sqlDoc = "INSERT INTO documents (application_id, document_type, passport_number, issuing_authority, " +
-                        "date_issued, validity_date) VALUES (?, ?, ?, ?, ?, ?)";
-                pstmtDoc = conn.prepareStatement(sqlDoc);
                 for (Document doc : app.getDocuments()) {
-                    pstmtDoc.setInt(1, applicationId);
-                    pstmtDoc.setString(2, doc.getDocumentType());
-                    pstmtDoc.setString(3, doc.getPassportNumber());
-                    pstmtDoc.setString(4, doc.getIssuingAuthority());
-                    pstmtDoc.setString(5, doc.getDateIssued());
-                    pstmtDoc.setString(6, doc.getValidityDate());
-                    pstmtDoc.executeUpdate();
+                    if ("Original Passport".equalsIgnoreCase(doc.getDocumentType())
+                            && doc.getPassportNumber() != null
+                            && !doc.getPassportNumber().isBlank()) {
+                        passportNo = doc.getPassportNumber();
+                        String upsertPassport =
+                            "INSERT OR IGNORE INTO passports " +
+                            "(passport_no, issued_by, date_of_issue, valid_until) " +
+                            "VALUES (?,?,?,?)";
+                        try (PreparedStatement ps = conn.prepareStatement(upsertPassport)) {
+                            ps.setString(1, passportNo);
+                            ps.setString(2, doc.getIssuingAuthority().isBlank()
+                                            ? "Unknown" : doc.getIssuingAuthority());
+                            ps.setString(3, doc.getDateIssued().isBlank()
+                                            ? "2020/01/01" : doc.getDateIssued());
+                            ps.setString(4, doc.getValidityDate().isBlank()
+                                            ? "2030/01/01" : doc.getValidityDate());
+                            ps.executeUpdate();
+                        }
+                        break;
+                    }
+                }
+            }
+            // Ensure a placeholder passport row exists (NOT NULL FK constraint)
+            String ensurePassport =
+                "INSERT OR IGNORE INTO passports (passport_no, issued_by, date_of_issue, valid_until) " +
+                "VALUES (?,?,?,?)";
+            try (PreparedStatement ps = conn.prepareStatement(ensurePassport)) {
+                ps.setString(1, passportNo);
+                ps.setString(2, "Pending");
+                ps.setString(3, "2020/01/01");
+                ps.setString(4, "2030/01/01");
+                ps.executeUpdate();
+            }
+
+            // ── STEP 3: Insert into `applications` ───────────────────────────
+            String insertApp =
+                "INSERT INTO applications " +
+                "(applicant_id, passport_no, requested_entry_type, length_of_stay_days, " +
+                " port_of_entry, dest_after_ph, age_upon_application, date_of_application, " +
+                " purpose_type, sponsor_name, spon_contact_no, status) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+            int applicationId = -1;
+            try (PreparedStatement ps = conn.prepareStatement(insertApp,
+                    Statement.RETURN_GENERATED_KEYS)) {
+                ps.setInt   (1,  applicantId);
+                ps.setString(2,  passportNo);
+                ps.setString(3,  app.getEntryType().isBlank() ? "Single" : app.getEntryType());
+                ps.setInt   (4,  app.getLengthOfStay() == 0 ? 30 : app.getLengthOfStay());
+                ps.setString(5,  app.getPortOfEntry().isBlank() ? "NAIA" : app.getPortOfEntry());
+                ps.setString(6,  app.getDestinationAfter());
+                ps.setInt   (7,  app.getAgeUponApp());
+                ps.setString(8,  app.getDateOfApp().isBlank()
+                                  ? java.time.LocalDate.now().toString() : app.getDateOfApp());
+                ps.setString(9,  app.getPurposeType().isBlank() ? "Tourism" : app.getPurposeType());
+                ps.setString(10, app.getSponsorName());
+                ps.setString(11, app.getSponsorContact());
+                ps.setString(12, app.getStatus().isBlank() ? "PENDING" : app.getStatus().toUpperCase());
+                ps.executeUpdate();
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        applicationId = keys.getInt(1);
+                        app.setId(applicationId);
+                    } else {
+                        throw new SQLException("No application_id generated.");
+                    }
                 }
             }
 
-            conn.commit(); // Commit Transaction
-            return true;
-        } catch (SQLException e) {
-            System.err.println("Error saving application: " + e.getMessage());
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
+            // ── STEP 4: Insert children (FK -> applicant_id, not application_id) ─
+            if (app.isWithChildren() && app.getChildren() != null) {
+                String insertChild =
+                    "INSERT INTO children (applicant_id, child_name, child_age) VALUES (?,?,?)";
+                try (PreparedStatement ps = conn.prepareStatement(insertChild)) {
+                    for (Child child : app.getChildren()) {
+                        ps.setInt   (1, applicantId);
+                        ps.setString(2, child.getName());
+                        ps.setInt   (3, child.getAge());
+                        ps.executeUpdate();
+                    }
                 }
             }
+
+            // ── STEP 5: Insert supporting documents (only document_type, no passport cols) ─
+            if (app.getDocuments() != null) {
+                String insertDoc =
+                    "INSERT INTO documents (application_id, document_type) VALUES (?,?)";
+                try (PreparedStatement ps = conn.prepareStatement(insertDoc)) {
+                    for (Document doc : app.getDocuments()) {
+                        // Passport is now stored in `passports`, skip it here
+                        if ("Original Passport".equalsIgnoreCase(doc.getDocumentType())) continue;
+                        ps.setInt   (1, applicationId);
+                        ps.setString(2, doc.getDocumentType());
+                        ps.executeUpdate();
+                    }
+                }
+            }
+
+            conn.commit();
+            System.out.println("[DB] Application saved. applicant_id=" + applicantId
+                + " application_id=" + applicationId);
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println("Error saving application: [SQLITE_ERROR] " + e.getMessage());
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             return false;
         } finally {
-            closeQuietly(generatedKeys);
-            closeQuietly(pstmtApp);
-            closeQuietly(pstmtChild);
-            closeQuietly(pstmtDoc);
             closeQuietly(conn);
         }
     }
 
     public boolean updateApplication(VisaApplication app) {
         Connection conn = null;
-        PreparedStatement pstmtApp = null;
-        PreparedStatement pstmtDelChildren = null;
-        PreparedStatement pstmtDelDocs = null;
-        PreparedStatement pstmtChild = null;
-        PreparedStatement pstmtDoc = null;
-
         try {
             conn = getConnection();
-            conn.setAutoCommit(false); // Begin Transaction
+            conn.setAutoCommit(false);
 
-            // 1. Update applications table
-            String sqlApp = "UPDATE applications SET full_name=?, sex=?, citizenship=?, civil_status=?, birth_date=?, " +
-                    "place_of_birth=?, email=?, contact_number=?, home_address=?, father_name=?, mother_name=?, " +
-                    "spouse_name=?, with_children=?, occupation=?, employer_address=?, status=?, " +
-                    "entry_type=?, length_of_stay=?, port_of_entry=?, destination_after=?, age_upon_app=?, date_of_app=?, purpose_type=?, sponsor_name=?, sponsor_contact=? WHERE id=?";
-            pstmtApp = conn.prepareStatement(sqlApp);
-            pstmtApp.setString(1, app.getFullName());
-            pstmtApp.setString(2, app.getSex());
-            pstmtApp.setString(3, app.getCitizenship());
-            pstmtApp.setString(4, app.getCivilStatus());
-            pstmtApp.setString(5, app.getBirthDate());
-            pstmtApp.setString(6, app.getPlaceOfBirth());
-            pstmtApp.setString(7, app.getEmail());
-            pstmtApp.setString(8, app.getContactNumber());
-            pstmtApp.setString(9, app.getHomeAddress());
-            pstmtApp.setString(10, app.getFatherName());
-            pstmtApp.setString(11, app.getMotherName());
-            pstmtApp.setString(12, app.getSpouseName());
-            pstmtApp.setBoolean(13, app.isWithChildren());
-            pstmtApp.setString(14, app.getOccupation());
-            pstmtApp.setString(15, app.getEmployerAddress());
-            pstmtApp.setString(16, app.getStatus());
-            pstmtApp.setString(17, app.getEntryType());
-            pstmtApp.setInt(18, app.getLengthOfStay());
-            pstmtApp.setString(19, app.getPortOfEntry());
-            pstmtApp.setString(20, app.getDestinationAfter());
-            pstmtApp.setInt(21, app.getAgeUponApp());
-            pstmtApp.setString(22, app.getDateOfApp());
-            pstmtApp.setString(23, app.getPurposeType());
-            pstmtApp.setString(24, app.getSponsorName());
-            pstmtApp.setString(25, app.getSponsorContact());
-            pstmtApp.setInt(26, app.getId());
-            pstmtApp.executeUpdate();
+            // ── Resolve applicant_id for this user ────────────────────────────
+            int applicantId = -1;
+            String lookupApplicant = "SELECT applicant_id FROM applicants WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(lookupApplicant)) {
+                ps.setInt(1, app.getUserId());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) applicantId = rs.getInt("applicant_id");
+                }
+            }
+            if (applicantId == -1) {
+                throw new SQLException("No applicant record found for user_id=" + app.getUserId());
+            }
 
-            // 2. Delete old children and insert updated list
-            String sqlDelChildren = "DELETE FROM children WHERE application_id = ?";
-            pstmtDelChildren = conn.prepareStatement(sqlDelChildren);
-            pstmtDelChildren.setInt(1, app.getId());
-            pstmtDelChildren.executeUpdate();
+            // ── Update applicants table (personal info) ───────────────────────
+            String updateApplicant =
+                "UPDATE applicants SET name=?, sex=?, citizenship=?, date_of_birth=?, " +
+                "place_of_birth=?, contact_no=?, home_address=?, civil_status=?, " +
+                "spouse_name=?, occupation=?, employer_office_and_address=?, " +
+                "father_name=?, mother_name=? WHERE applicant_id=?";
+            try (PreparedStatement ps = conn.prepareStatement(updateApplicant)) {
+                ps.setString(1,  app.getFullName());
+                ps.setString(2,  app.getSex());
+                ps.setString(3,  app.getCitizenship());
+                ps.setString(4,  app.getBirthDate());
+                ps.setString(5,  app.getPlaceOfBirth());
+                ps.setString(6,  app.getContactNumber());
+                ps.setString(7,  app.getHomeAddress());
+                ps.setString(8,  app.getCivilStatus());
+                ps.setString(9,  app.getSpouseName());
+                ps.setString(10, app.getOccupation());
+                ps.setString(11, app.getEmployerAddress());
+                ps.setString(12, app.getFatherName());
+                ps.setString(13, app.getMotherName());
+                ps.setInt   (14, applicantId);
+                ps.executeUpdate();
+            }
 
+            // ── Update applications table (trip details) ──────────────────────
+            String updateApp =
+                "UPDATE applications SET " +
+                "requested_entry_type=?, length_of_stay_days=?, port_of_entry=?, " +
+                "dest_after_ph=?, age_upon_application=?, date_of_application=?, " +
+                "purpose_type=?, sponsor_name=?, spon_contact_no=?, status=? " +
+                "WHERE application_id=?";
+            try (PreparedStatement ps = conn.prepareStatement(updateApp)) {
+                ps.setString(1,  app.getEntryType());
+                ps.setInt   (2,  app.getLengthOfStay());
+                ps.setString(3,  app.getPortOfEntry());
+                ps.setString(4,  app.getDestinationAfter());
+                ps.setInt   (5,  app.getAgeUponApp());
+                ps.setString(6,  app.getDateOfApp());
+                ps.setString(7,  app.getPurposeType());
+                ps.setString(8,  app.getSponsorName());
+                ps.setString(9,  app.getSponsorContact());
+                ps.setString(10, app.getStatus());
+                ps.setInt   (11, app.getId());
+                ps.executeUpdate();
+            }
+
+            // ── Replace children ──────────────────────────────────────────────
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "DELETE FROM children WHERE applicant_id = ?")) {
+                ps.setInt(1, applicantId);
+                ps.executeUpdate();
+            }
             if (app.isWithChildren() && app.getChildren() != null) {
-                String sqlChild = "INSERT INTO children (application_id, name, age) VALUES (?, ?, ?)";
-                pstmtChild = conn.prepareStatement(sqlChild);
-                for (Child child : app.getChildren()) {
-                    pstmtChild.setInt(1, app.getId());
-                    pstmtChild.setString(2, child.getName());
-                    pstmtChild.setInt(3, child.getAge());
-                    pstmtChild.executeUpdate();
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO children (applicant_id, child_name, child_age) VALUES (?,?,?)")) {
+                    for (Child child : app.getChildren()) {
+                        ps.setInt   (1, applicantId);
+                        ps.setString(2, child.getName());
+                        ps.setInt   (3, child.getAge());
+                        ps.executeUpdate();
+                    }
                 }
             }
 
-            // 3. Delete old documents and insert updated list
-            String sqlDelDocs = "DELETE FROM documents WHERE application_id = ?";
-            pstmtDelDocs = conn.prepareStatement(sqlDelDocs);
-            pstmtDelDocs.setInt(1, app.getId());
-            pstmtDelDocs.executeUpdate();
-
+            // ── Replace supporting documents ──────────────────────────────────
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "DELETE FROM documents WHERE application_id = ?")) {
+                ps.setInt(1, app.getId());
+                ps.executeUpdate();
+            }
             if (app.getDocuments() != null) {
-                String sqlDoc = "INSERT INTO documents (application_id, document_type, passport_number, issuing_authority, " +
-                        "date_issued, validity_date) VALUES (?, ?, ?, ?, ?, ?)";
-                pstmtDoc = conn.prepareStatement(sqlDoc);
-                for (Document doc : app.getDocuments()) {
-                    pstmtDoc.setInt(1, app.getId());
-                    pstmtDoc.setString(2, doc.getDocumentType());
-                    pstmtDoc.setString(3, doc.getPassportNumber());
-                    pstmtDoc.setString(4, doc.getIssuingAuthority());
-                    pstmtDoc.setString(5, doc.getDateIssued());
-                    pstmtDoc.setString(6, doc.getValidityDate());
-                    pstmtDoc.executeUpdate();
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO documents (application_id, document_type) VALUES (?,?)")) {
+                    for (Document doc : app.getDocuments()) {
+                        if ("Original Passport".equalsIgnoreCase(doc.getDocumentType())) continue;
+                        ps.setInt   (1, app.getId());
+                        ps.setString(2, doc.getDocumentType());
+                        ps.executeUpdate();
+                    }
                 }
             }
 
@@ -406,26 +501,15 @@ public class DatabaseManager {
             return true;
         } catch (SQLException e) {
             System.err.println("Error updating application: " + e.getMessage());
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            }
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             return false;
         } finally {
-            closeQuietly(pstmtApp);
-            closeQuietly(pstmtDelChildren);
-            closeQuietly(pstmtDelDocs);
-            closeQuietly(pstmtChild);
-            closeQuietly(pstmtDoc);
             closeQuietly(conn);
         }
     }
 
     public boolean deleteApplication(int appId) {
-        String sql = "DELETE FROM applications WHERE id = ?";
+        String sql = "DELETE FROM applications WHERE application_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, appId);
@@ -438,7 +522,7 @@ public class DatabaseManager {
     }
 
     public boolean updateApplicationStatus(int appId, String status) {
-        String sql = "UPDATE applications SET status = ? WHERE id = ?";
+        String sql = "UPDATE applications SET status = ? WHERE application_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, status.toUpperCase());
@@ -451,40 +535,58 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Returns all applications submitted by a given user_id.
+     * Joins applicants + applications + passports to rebuild a VisaApplication object.
+     */
     public List<VisaApplication> getApplicationsByUserId(int userId) {
-        String email = "";
-        String userSql = "SELECT email FROM users WHERE id = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(userSql)) {
-            pstmt.setInt(1, userId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    email = rs.getString("email");
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error reading user email: " + e.getMessage());
-        }
+        String sql =
+            "SELECT a.application_id, a.passport_no, a.requested_entry_type, " +
+            "       a.length_of_stay_days, a.port_of_entry, a.dest_after_ph, " +
+            "       a.age_upon_application, a.date_of_application, a.purpose_type, " +
+            "       a.sponsor_name, a.spon_contact_no, a.status, " +
+            "       ap.applicant_id, ap.user_id, ap.name, ap.sex, ap.citizenship, " +
+            "       ap.date_of_birth, ap.place_of_birth, ap.contact_no, ap.home_address, " +
+            "       ap.civil_status, ap.spouse_name, ap.occupation, " +
+            "       ap.employer_office_and_address, ap.father_name, ap.mother_name, " +
+            "       u.email " +
+            "FROM applications a " +
+            "INNER JOIN applicants ap ON a.applicant_id = ap.applicant_id " +
+            "INNER JOIN users      u  ON ap.user_id     = u.id " +
+            "WHERE ap.user_id = ? " +
+            "ORDER BY a.application_id DESC";
 
-        String sql = "SELECT * FROM applications WHERE user_id = ? AND email = ? ORDER BY id DESC";
         List<VisaApplication> list = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, userId);
-            pstmt.setString(2, email);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapResultSetToApplication(conn, rs));
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error reading applications by user: " + e.getMessage());
+            System.err.println("Error reading applications by user: [SQLITE_ERROR] " + e.getMessage());
         }
         return list;
     }
 
     public List<VisaApplication> getAllApplications() {
-        String sql = "SELECT * FROM applications ORDER BY id DESC";
+        String sql =
+            "SELECT a.application_id, a.passport_no, a.requested_entry_type, " +
+            "       a.length_of_stay_days, a.port_of_entry, a.dest_after_ph, " +
+            "       a.age_upon_application, a.date_of_application, a.purpose_type, " +
+            "       a.sponsor_name, a.spon_contact_no, a.status, " +
+            "       ap.applicant_id, ap.user_id, ap.name, ap.sex, ap.citizenship, " +
+            "       ap.date_of_birth, ap.place_of_birth, ap.contact_no, ap.home_address, " +
+            "       ap.civil_status, ap.spouse_name, ap.occupation, " +
+            "       ap.employer_office_and_address, ap.father_name, ap.mother_name, " +
+            "       u.email " +
+            "FROM applications a " +
+            "INNER JOIN applicants ap ON a.applicant_id = ap.applicant_id " +
+            "INNER JOIN users      u  ON ap.user_id     = u.id " +
+            "ORDER BY a.application_id DESC";
+
         List<VisaApplication> list = new ArrayList<>();
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
@@ -499,14 +601,29 @@ public class DatabaseManager {
     }
 
     public List<VisaApplication> searchApplications(String query) {
-        String sql = "SELECT * FROM applications WHERE full_name LIKE ? OR email LIKE ? OR status LIKE ? ORDER BY id DESC";
+        String sql =
+            "SELECT a.application_id, a.passport_no, a.requested_entry_type, " +
+            "       a.length_of_stay_days, a.port_of_entry, a.dest_after_ph, " +
+            "       a.age_upon_application, a.date_of_application, a.purpose_type, " +
+            "       a.sponsor_name, a.spon_contact_no, a.status, " +
+            "       ap.applicant_id, ap.user_id, ap.name, ap.sex, ap.citizenship, " +
+            "       ap.date_of_birth, ap.place_of_birth, ap.contact_no, ap.home_address, " +
+            "       ap.civil_status, ap.spouse_name, ap.occupation, " +
+            "       ap.employer_office_and_address, ap.father_name, ap.mother_name, " +
+            "       u.email " +
+            "FROM applications a " +
+            "INNER JOIN applicants ap ON a.applicant_id = ap.applicant_id " +
+            "INNER JOIN users      u  ON ap.user_id     = u.id " +
+            "WHERE ap.name LIKE ? OR u.email LIKE ? OR a.status LIKE ? " +
+            "ORDER BY a.application_id DESC";
+
         List<VisaApplication> list = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            String wildcard = "%" + query + "%";
-            pstmt.setString(1, wildcard);
-            pstmt.setString(2, wildcard);
-            pstmt.setString(3, wildcard);
+            String w = "%" + query + "%";
+            pstmt.setString(1, w);
+            pstmt.setString(2, w);
+            pstmt.setString(3, w);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapResultSetToApplication(conn, rs));
@@ -518,70 +635,96 @@ public class DatabaseManager {
         return list;
     }
 
-    private VisaApplication mapResultSetToApplication(Connection conn, ResultSet rs) throws SQLException {
-        int appId = rs.getInt("id");
-        
+    /**
+     * Maps a ResultSet row (from the JOIN queries above) back to a VisaApplication.
+     * Column aliases match the new schema column names exactly.
+     */
+    private VisaApplication mapResultSetToApplication(Connection conn, ResultSet rs)
+            throws SQLException {
+        int applicationId = rs.getInt("application_id");
+        int applicantId   = rs.getInt("applicant_id");
+
         VisaApplication app = new VisaApplication(
-                appId,
-                rs.getInt("user_id"),
-                rs.getString("full_name"),
+                applicationId,
+                rs.getInt   ("user_id"),
+                rs.getString("name"),           // ap.name
                 rs.getString("sex"),
                 rs.getString("citizenship"),
                 rs.getString("civil_status"),
-                rs.getString("birth_date"),
+                rs.getString("date_of_birth"),  // ap.date_of_birth
                 rs.getString("place_of_birth"),
-                rs.getString("email"),
-                rs.getString("contact_number"),
+                rs.getString("email"),          // u.email
+                rs.getString("contact_no"),     // ap.contact_no
                 rs.getString("home_address"),
                 rs.getString("father_name"),
                 rs.getString("mother_name"),
                 rs.getString("spouse_name"),
-                rs.getBoolean("with_children") || (rs.getInt("with_children") == 1), // SQLite compatibility
+                false,                          // with_children computed below
                 rs.getString("occupation"),
-                rs.getString("employer_address"),
+                rs.getString("employer_office_and_address"),
                 rs.getString("status")
         );
 
-        app.setEntryType(rs.getString("entry_type"));
-        app.setLengthOfStay(rs.getInt("length_of_stay"));
-        app.setPortOfEntry(rs.getString("port_of_entry"));
-        app.setDestinationAfter(rs.getString("destination_after"));
-        app.setAgeUponApp(rs.getInt("age_upon_app"));
-        app.setDateOfApp(rs.getString("date_of_app"));
-        app.setPurposeType(rs.getString("purpose_type"));
-        app.setSponsorName(rs.getString("sponsor_name"));
-        app.setSponsorContact(rs.getString("sponsor_contact"));
+        app.setEntryType      (rs.getString("requested_entry_type"));
+        app.setLengthOfStay   (rs.getInt   ("length_of_stay_days"));
+        app.setPortOfEntry    (rs.getString("port_of_entry"));
+        app.setDestinationAfter(rs.getString("dest_after_ph"));
+        app.setAgeUponApp     (rs.getInt   ("age_upon_application"));
+        app.setDateOfApp      (rs.getString("date_of_application"));
+        app.setPurposeType    (rs.getString("purpose_type"));
+        app.setSponsorName    (rs.getString("sponsor_name"));
+        app.setSponsorContact (rs.getString("spon_contact_no"));
 
-        // Load children
-        String sqlChildren = "SELECT * FROM children WHERE application_id = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sqlChildren)) {
-            pstmt.setInt(1, appId);
-            try (ResultSet rsChild = pstmt.executeQuery()) {
+        // ── Load children (FK is applicant_id in new schema) ─────────────────
+        String sqlChildren = "SELECT * FROM children WHERE applicant_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sqlChildren)) {
+            ps.setInt(1, applicantId);
+            try (ResultSet rsChild = ps.executeQuery()) {
                 while (rsChild.next()) {
                     app.addChild(new Child(
-                            rsChild.getInt("id"),
-                            appId,
-                            rsChild.getString("name"),
-                            rsChild.getInt("age")
+                            rsChild.getInt   ("child_id"),
+                            applicationId,
+                            rsChild.getString("child_name"),
+                            rsChild.getInt   ("child_age")
                     ));
+                    app.setWithChildren(true);
                 }
             }
         }
 
-        // Load documents
+        // ── Load supporting documents ─────────────────────────────────────────
+        // Also load the passport from the passports table and represent it as a Document
+        // so the existing UI (which expects a List<Document>) still works.
+        String passportNo = rs.getString("passport_no");
+        if (passportNo != null && !passportNo.startsWith("N/A-")) {
+            String sqlPassport = "SELECT * FROM passports WHERE passport_no = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlPassport)) {
+                ps.setString(1, passportNo);
+                try (ResultSet rsPp = ps.executeQuery()) {
+                    if (rsPp.next()) {
+                        app.addDocument(new Document(
+                                -1, applicationId,
+                                "Original Passport",
+                                passportNo,
+                                rsPp.getString("issued_by"),
+                                rsPp.getString("date_of_issue"),
+                                rsPp.getString("valid_until")
+                        ));
+                    }
+                }
+            }
+        }
+
         String sqlDocs = "SELECT * FROM documents WHERE application_id = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sqlDocs)) {
-            pstmt.setInt(1, appId);
-            try (ResultSet rsDoc = pstmt.executeQuery()) {
+        try (PreparedStatement ps = conn.prepareStatement(sqlDocs)) {
+            ps.setInt(1, applicationId);
+            try (ResultSet rsDoc = ps.executeQuery()) {
                 while (rsDoc.next()) {
                     app.addDocument(new Document(
-                            rsDoc.getInt("id"),
-                            appId,
+                            rsDoc.getInt   ("document_id"),
+                            applicationId,
                             rsDoc.getString("document_type"),
-                            rsDoc.getString("passport_number"),
-                            rsDoc.getString("issuing_authority"),
-                            rsDoc.getString("date_issued"),
-                            rsDoc.getString("validity_date")
+                            null, null, null, null   // no passport fields on supporting docs
                     ));
                 }
             }

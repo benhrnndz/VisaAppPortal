@@ -30,7 +30,7 @@ public class ApplicationDAO {
     //  Called by the admin panel's Approve/Deny buttons.
     // ══════════════════════════════════════════════════════════════════════════
     public boolean updateApplicationStatus(int applicationId, String newStatus) {
-        String sql = "UPDATE applications SET status = ? WHERE id = ?";
+        String sql = "UPDATE applications SET status = ? WHERE application_id = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, newStatus.toUpperCase());
@@ -46,15 +46,13 @@ public class ApplicationDAO {
 
     // ══════════════════════════════════════════════════════════════════════════
     //  QUERY 5 — MODERATE: WHERE + LIKE (Search/Filter)
-    //  Searches applications by name, citizenship, or status keyword.
-    //  Demonstrates parameterised wildcard queries.
+    //  Searches applicants by name or citizenship keyword.
     // ══════════════════════════════════════════════════════════════════════════
     public List<Applicant> searchApplications(String keyword) {
-        String sql = "SELECT * FROM applications "
-                   + "WHERE full_name    LIKE ? "
-                   + "   OR citizenship  LIKE ? "
-                   + "   OR status       LIKE ? "
-                   + "ORDER BY id DESC";
+        String sql = "SELECT * FROM applicants "
+                   + "WHERE name        LIKE ? "
+                   + "   OR citizenship LIKE ? "
+                   + "ORDER BY applicant_id DESC";
 
         List<Applicant> results = new ArrayList<>();
         String wildcard = "%" + keyword + "%";
@@ -62,32 +60,72 @@ public class ApplicationDAO {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, wildcard);
             ps.setString(2, wildcard);
-            ps.setString(3, wildcard);
-
-            ResultSet rs = ps.executeQuery();         // ← ResultSet = our "Cursor"
-            while (rs.next()) {                       // row-by-row traversal
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
                 results.add(mapRowToApplicant(rs));
             }
             System.out.println("[Q5-SEARCH] '" + keyword + "' → " + results.size() + " results.");
-
         } catch (SQLException e) {
             System.err.println("[Q5-SEARCH] Error: " + e.getMessage());
         }
         return results;
     }
 
+    /**
+     * Q5 variant for the admin table — returns String[] rows:
+     * [application_id, name, citizenship, status, doc_count].
+     */
+    public List<String[]> searchApplicationsAsRows(String keyword) {
+        String sql =
+            "SELECT a.application_id, ap.name, ap.citizenship, a.status, "
+          + "       COUNT(d.document_id) AS doc_count "
+          + "FROM applications a "
+          + "INNER JOIN applicants ap ON a.applicant_id = ap.applicant_id "
+          + "LEFT  JOIN documents  d  ON a.application_id = d.application_id "
+          + "WHERE ap.name        LIKE ? "
+          + "   OR ap.citizenship LIKE ? "
+          + "   OR a.status       LIKE ? "
+          + "GROUP BY a.application_id "
+          + "ORDER BY a.application_id DESC";
+
+        List<String[]> rows = new ArrayList<>();
+        String wildcard = "%" + keyword + "%";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, wildcard);
+            ps.setString(2, wildcard);
+            ps.setString(3, wildcard);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                rows.add(new String[]{
+                    String.valueOf(rs.getInt("application_id")),
+                    rs.getString("name"),
+                    rs.getString("citizenship"),
+                    rs.getString("status"),
+                    String.valueOf(rs.getInt("doc_count"))
+                });
+            }
+            System.out.println("[Q5-SEARCH-ROWS] '" + keyword + "' → " + rows.size() + " results.");
+        } catch (SQLException e) {
+            System.err.println("[Q5-SEARCH-ROWS] Error: " + e.getMessage());
+        }
+        return rows;
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     //  QUERY 6 — MODERATE: JOIN + GROUP BY + COUNT
-    //  Returns each applicant along with how many documents they submitted.
-    //  Uses a LEFT JOIN so applicants with 0 documents still appear.
+    //  Returns each application with applicant name, citizenship, status, and
+    //  how many supporting documents they submitted.
     // ══════════════════════════════════════════════════════════════════════════
     public List<String[]> getApplicationsWithDocumentCount() {
-        String sql = "SELECT a.id, a.full_name, a.citizenship, a.status, "
-                   + "       COUNT(d.id) AS doc_count "
-                   + "FROM applications a "
-                   + "LEFT JOIN documents d ON a.id = d.application_id "
-                   + "GROUP BY a.id "
-                   + "ORDER BY a.id DESC";
+        String sql =
+            "SELECT a.application_id, ap.name, ap.citizenship, a.status, "
+          + "       COUNT(d.document_id) AS doc_count "
+          + "FROM applications a "
+          + "INNER JOIN applicants ap ON a.applicant_id  = ap.applicant_id "
+          + "LEFT  JOIN documents  d  ON a.application_id = d.application_id "
+          + "GROUP BY a.application_id "
+          + "ORDER BY a.application_id DESC";
 
         List<String[]> rows = new ArrayList<>();
 
@@ -96,8 +134,8 @@ public class ApplicationDAO {
 
             while (rs.next()) {
                 rows.add(new String[]{
-                    String.valueOf(rs.getInt   ("id")),
-                    rs.getString  ("full_name"),
+                    String.valueOf(rs.getInt   ("application_id")),
+                    rs.getString  ("name"),
                     rs.getString  ("citizenship"),
                     rs.getString  ("status"),
                     String.valueOf(rs.getInt   ("doc_count"))
@@ -111,23 +149,25 @@ public class ApplicationDAO {
         return rows;
     }
 
-    // ── Private helper: maps one ResultSet row → Applicant OOP model ──────────
     private Applicant mapRowToApplicant(ResultSet rs) throws SQLException {
-        String fullName = rs.getString("full_name");
+        String fullName = rs.getString("name");
         return new Applicant(
+            rs.getInt   ("applicant_id"),
             rs.getInt   ("user_id"),
-            rs.getInt   ("id"),
             splitFirst(fullName),
             splitLast (fullName),
-            rs.getString("birth_date"),
-            rs.getString("email"),
-            rs.getString("contact_number"),
+            rs.getString("date_of_birth"),
+            rs.getString("place_of_birth"),
             rs.getString("sex"),
             rs.getString("citizenship"),
-            rs.getString("civil_status"),
-            rs.getString("place_of_birth"),
+            rs.getString("contact_no"),
             rs.getString("home_address"),
-            rs.getString("status")
+            rs.getString("civil_status"),
+            rs.getString("spouse_name"),
+            rs.getString("occupation"),
+            rs.getString("employer_office_and_address"),
+            rs.getString("father_name"),
+            rs.getString("mother_name")
         );
     }
 

@@ -6,7 +6,6 @@ import com.visa.app.dao.DocumentDAO;
 import com.visa.app.model.Applicant;
 import com.visa.app.model.Document;
 import com.visa.app.model.Passport;
-import com.visa.app.model.SupportingDocument;
 
 import java.util.List;
 
@@ -50,19 +49,20 @@ public class BackendBridge {
 
     // ── Applicant operations ──────────────────────────────────────────────────
 
-    /** Q1: Insert a new applicant (user + application rows). */
+    /** Q1: Insert a new applicant (users + applicants rows). */
+    public boolean submitApplication(Applicant applicant, String email, String password) {
+        return applicantDAO.insertApplicant(applicant, email, password);
+    }
+
+    /** Q1 convenience overload — email stored on the applicant object as a transient field. */
     public boolean submitApplication(Applicant applicant, String password) {
-        return applicantDAO.insertApplicant(applicant, password);
+        // email is carried as a transient field set by the caller before this call
+        return applicantDAO.insertApplicant(applicant, applicant.getTransientEmail(), password);
     }
 
     /** Q2: Load all applicants as OOP model objects. */
     public List<Applicant> getAllApplicants() {
         return applicantDAO.getAllApplicants();
-    }
-
-    /** Q3: Fetch one applicant with their email via JOIN. */
-    public Applicant getApplicantWithEmail(int applicationId) {
-        return applicantDAO.getApplicantWithEmail(applicationId);
     }
 
     // ── Application status operations ─────────────────────────────────────────
@@ -77,9 +77,14 @@ public class BackendBridge {
         return applicationDAO.updateApplicationStatus(applicationId, "DENIED");
     }
 
-    /** Q5: Search applications by keyword. */
+    /** Q5: Search applications by keyword — returns rows for the admin table. */
     public List<Applicant> searchApplications(String keyword) {
         return applicationDAO.searchApplications(keyword);
+    }
+
+    /** Q5 variant: returns String[] rows (id, name, citizenship, status, doc_count) for the admin table. */
+    public List<String[]> searchApplicationsAsRows(String keyword) {
+        return applicationDAO.searchApplicationsAsRows(keyword);
     }
 
     /** Q6: Get each application with its document count (JOIN + COUNT). */
@@ -89,25 +94,22 @@ public class BackendBridge {
 
     // ── Document operations ───────────────────────────────────────────────────
 
-    /** Q7: Save a document (Passport or SupportingDocument). */
+    /** Q7: Save a supporting document (Air Ticket, Invitation Letter, Bank Certificate). */
     public boolean saveDocument(Document document) {
         return documentDAO.insertDocument(document);
     }
 
-    /** Convenience: save a passport document. */
-    public boolean savePassport(int applicationId,
-                                 String number, String authority,
-                                 String dateIssued, String validityDate) {
-        Passport p = new Passport(number, authority, dateIssued, validityDate);
-        p.setApplicationId(applicationId);
-        return documentDAO.insertDocument(p);
+    /** Convenience: save a passport to the passports table. */
+    public boolean savePassport(String number, String authority,
+                                String dateIssued, String validUntil) {
+        return documentDAO.insertPassport(number, authority, dateIssued, validUntil);
     }
 
-    /** Convenience: save a supporting document (Air Ticket, etc.). */
+    /** Convenience: save a supporting document. */
     public boolean saveSupportingDocument(int applicationId, String type) {
-        SupportingDocument sd = new SupportingDocument(type);
-        sd.setApplicationId(applicationId);
-        return documentDAO.insertDocument(sd);
+        Document d = new Document(type);
+        d.setApplicationId(applicationId);
+        return documentDAO.insertDocument(d);
     }
 
     /** Q8: Get all documents for an application. */
@@ -120,9 +122,19 @@ public class BackendBridge {
         return documentDAO.getApplicantsWithPassportDetails();
     }
 
-    /** Q10: Subquery — only applications with all 4 document types. */
+    /** Q3: JOIN + WHERE — fetch one applicant's full profile with their email. */
+    public com.visa.app.model.Applicant getApplicantProfile(int applicantId) {
+        return applicantDAO.getApplicantProfile(applicantId);
+    }
+
+    /** Q10: Subquery — only applications with all 3 supporting doc types. */
     public List<String[]> getCompleteApplications() {
         return documentDAO.getCompleteApplications();
+    }
+
+    /** Q11: Correlated subquery — applications with passports expiring within 180 days. */
+    public List<String[]> getApplicationsWithExpiringPassports() {
+        return documentDAO.getApplicationsWithExpiringPassports();
     }
 
     // ── Polymorphism demo helper ───────────────────────────────────────────────

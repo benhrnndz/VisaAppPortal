@@ -95,11 +95,12 @@ public class SubmitApplicationHandler implements ActionListener {
         }
 
         // ── STEP 2: Instantiate the OOP Model ─────────────────────────────────
+        // Convenience constructor: (firstName, lastName, dob, placeOfBirth, sex,
+        //                           citizenship, contactNo, homeAddress, civilStatus)
         Applicant newApplicant = new Applicant(
             firstName, lastName, dob,
-            email, contact,
-            sex, citizenship, civilStatus,
-            pob, address
+            pob, sex, citizenship,
+            contact, address, civilStatus
         );
 
         // Print the polymorphic summary to console (demonstrates getProfileSummary())
@@ -107,13 +108,13 @@ public class SubmitApplicationHandler implements ActionListener {
 
         // ── STEP 3: Pass model to DAO via BackendBridge ───────────────────────
         BackendBridge backend = BackendBridge.getInstance();
-        boolean saved = backend.submitApplication(newApplicant, password);
+        boolean saved = backend.submitApplication(newApplicant, email, password);
 
         // ── STEP 4: Update the UI based on result ─────────────────────────────
         if (saved) {
             JOptionPane.showMessageDialog(null,
                 "Visa application for " + newApplicant.getFullName()
-                    + " saved successfully!\nApplication ID: " + newApplicant.getApplicationId(),
+                    + " saved successfully!\nApplicant ID: " + newApplicant.getApplicantId(),
                 "Success", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(null,

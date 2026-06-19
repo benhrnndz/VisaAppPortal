@@ -1,6 +1,5 @@
 package com.visa.app.ui;
 
-import com.visa.app.model.Applicant;
 import com.visa.app.utils.BackendBridge;
 
 import javax.swing.*;
@@ -86,34 +85,32 @@ public class AdminActionHandler {
     // ── Search and refresh the table (Q5 LIKE query) ──────────────────────────
     public static void searchAndRefresh(String keyword, DefaultTableModel tableModel) {
         BackendBridge backend = BackendBridge.getInstance();
-
-        // Q5: search with WHERE + LIKE
-        List<Applicant> results = keyword.isBlank()
-            ? backend.getAllApplicants()          // Q2: show all if empty
-            : backend.searchApplications(keyword); // Q5: filtered search
-
+        List<String[]> results = keyword.isBlank()
+            ? backend.getApplicationsWithDocumentCount()   // Q6: show all
+            : backend.searchApplicationsAsRows(keyword);   // Q5: filtered
         populateTable(tableModel, results);
     }
 
-    // ── Load all applicants into table on panel open ──────────────────────────
+    // ── Load all applications into table on panel open ────────────────────────
     public static void loadAllIntoTable(DefaultTableModel tableModel) {
         BackendBridge backend = BackendBridge.getInstance();
-        List<Applicant> all = backend.getAllApplicants();  // Q2: SELECT *
+        List<String[]> all = backend.getApplicationsWithDocumentCount();  // Q6
         populateTable(tableModel, all);
     }
 
-    // ── Helper: fills table rows from a list of Applicant models ─────────────
-    private static void populateTable(DefaultTableModel model, List<Applicant> applicants) {
-        model.setRowCount(0);  // clear existing rows
-        for (Applicant a : applicants) {
+    // ── Helper: fills table rows from a list of String[] rows ────────────────
+    // Columns: [0]=application_id, [1]=name, [2]=citizenship, [3]=status, [4]=doc_count
+    private static void populateTable(DefaultTableModel model, List<String[]> rows) {
+        model.setRowCount(0);
+        for (String[] row : rows) {
             model.addRow(new Object[]{
-                a.getApplicationId(),
-                a.getFullName(),         // from Person.getFullName()
-                a.getCitizenship(),
-                a.getStatus(),
-                a.getEmail()
+                row[0],  // application_id
+                row[1],  // name
+                row[2],  // citizenship
+                row[3],  // status
+                row[4]   // doc_count
             });
         }
-        System.out.println("[UI] Table refreshed with " + applicants.size() + " applicants.");
+        System.out.println("[UI] Table refreshed with " + rows.size() + " applications.");
     }
 }

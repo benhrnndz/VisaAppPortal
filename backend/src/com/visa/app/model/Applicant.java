@@ -6,83 +6,86 @@ package com.visa.app.model;
  *  OOP CONCEPT: Inheritance + Polymorphism + Encapsulation
  * ============================================================
  *
- * INHERITANCE  — `extends Person` means Applicant automatically gains
- *                firstName, lastName, dateOfBirth, getFullName(), and
- *                the toString() hook without re-declaring them.
- *                The constructor calls super(...) to initialise the
- *                parent's private fields through its constructor.
+ * CORRECTED: Per the ERD, ApplicantT holds ONLY personal/biographic
+ * data. Trip/visa-specific fields (status, passport_no, entry type,
+ * length of stay, purpose, sponsor, etc.) belong to ApplicationT and
+ * now live in the separate Application model — they used to be
+ * incorrectly merged into this class.
  *
- * POLYMORPHISM — Overrides getProfileSummary() so an Applicant prints
- *                differently from a Child when called through a Person ref.
- *
- * ENCAPSULATION — All applicant-specific fields are private with
- *                 public getters/setters.
- *
- * Maps to: `users` table (userId, email) + `applications` table (all other fields).
+ * Maps to: `applicants` table (+ user_id FK -> `users`).
  */
 public class Applicant extends Person {
 
-    // ── ENCAPSULATION: private fields ─────────────────────────────────────────
-    private int    userId;
-    private int    applicationId;
-    private String email;
-    private String contactNumber;
+    // ── ENCAPSULATION: private fields, matching ApplicantT exactly ────────────
+    private int    applicantId;   // Applicant_ID (PK)
+    private int    userId;        // FK -> users(id), for login
     private String sex;
     private String citizenship;
-    private String civilStatus;
-    private String placeOfBirth;
+    private String contactNo;
     private String homeAddress;
-    private String status;        // "PENDING" | "APPROVED" | "DENIED"
+    private String civilStatus;
+    private String spouseName;
+    private String occupation;
+    private String employerOfficeAndAddress;
+    private String fatherName;
+    private String motherName;
+
+    // ── Transient field — not stored in DB, used to pass email to DAO ─────────
+    private String transientEmail = "";
+    public String getTransientEmail()          { return transientEmail; }
+    public void   setTransientEmail(String e)  { this.transientEmail = e; }
 
     // ── Full constructor (used when loading a record from the database) ────────
-    public Applicant(int userId, int applicationId,
+    public Applicant(int applicantId, int userId,
                      String firstName, String lastName, String dateOfBirth,
-                     String email, String contactNumber,
-                     String sex, String citizenship, String civilStatus,
-                     String placeOfBirth, String homeAddress, String status) {
+                     String placeOfBirth, String sex, String citizenship,
+                     String contactNo, String homeAddress, String civilStatus,
+                     String spouseName, String occupation, String employerOfficeAndAddress,
+                     String fatherName, String motherName) {
         super(firstName, lastName, dateOfBirth);   // INHERITANCE: calls Person(...)
-        this.userId        = userId;
-        this.applicationId = applicationId;
-        this.email         = email;
-        this.contactNumber = contactNumber;
-        this.sex           = sex;
-        this.citizenship   = citizenship;
-        this.civilStatus   = civilStatus;
-        this.placeOfBirth  = placeOfBirth;
-        this.homeAddress   = homeAddress;
-        this.status        = status;
+        this.applicantId = applicantId;
+        this.userId       = userId;
+        this.placeOfBirthInit(placeOfBirth);
+        this.sex          = sex;
+        this.citizenship  = citizenship;
+        this.contactNo    = contactNo;
+        this.homeAddress  = homeAddress;
+        this.civilStatus  = civilStatus;
+        this.spouseName   = spouseName;
+        this.occupation   = occupation;
+        this.employerOfficeAndAddress = employerOfficeAndAddress;
+        this.fatherName   = fatherName;
+        this.motherName   = motherName;
     }
 
-    /** Convenience constructor for a new submission (IDs assigned after DB insert). */
+    // place_of_birth isn't on Person, store it locally
+    private String placeOfBirth;
+    private void placeOfBirthInit(String p) { this.placeOfBirth = p; }
+    public String getPlaceOfBirth()              { return placeOfBirth; }
+    public void   setPlaceOfBirth(String p)      { this.placeOfBirth = p; }
+
+    /** Convenience constructor for a brand-new submission (no IDs yet). */
     public Applicant(String firstName, String lastName, String dateOfBirth,
-                     String email, String contactNumber,
-                     String sex, String citizenship, String civilStatus,
-                     String placeOfBirth, String homeAddress) {
-        this(-1, -1, firstName, lastName, dateOfBirth,
-             email, contactNumber, sex, citizenship, civilStatus,
-             placeOfBirth, homeAddress, "PENDING");
+                     String placeOfBirth, String sex, String citizenship,
+                     String contactNo, String homeAddress, String civilStatus) {
+        this(-1, -1, firstName, lastName, dateOfBirth, placeOfBirth, sex, citizenship,
+             contactNo, homeAddress, civilStatus, null, null, null, null, null);
     }
 
     // ── POLYMORPHISM: override getProfileSummary() ────────────────────────────
     @Override
     public String getProfileSummary() {
-        return "Primary Applicant: " + getFullName()
+        return "Applicant: " + getFullName()
              + " | Citizenship: " + citizenship
-             + " | Status: "      + status;
+             + " | Civil Status: " + civilStatus;
     }
 
     // ── Getters & Setters (Encapsulation) ─────────────────────────────────────
+    public int    getApplicantId()                  { return applicantId; }
+    public void   setApplicantId(int id)            { this.applicantId = id; }
+
     public int    getUserId()                       { return userId; }
     public void   setUserId(int id)                 { this.userId = id; }
-
-    public int    getApplicationId()                { return applicationId; }
-    public void   setApplicationId(int id)          { this.applicationId = id; }
-
-    public String getEmail()                        { return email; }
-    public void   setEmail(String e)                { this.email = e; }
-
-    public String getContactNumber()                { return contactNumber; }
-    public void   setContactNumber(String n)        { this.contactNumber = n; }
 
     public String getSex()                          { return sex; }
     public void   setSex(String s)                  { this.sex = s; }
@@ -90,19 +93,27 @@ public class Applicant extends Person {
     public String getCitizenship()                  { return citizenship; }
     public void   setCitizenship(String c)          { this.citizenship = c; }
 
-    public String getCivilStatus()                  { return civilStatus; }
-    public void   setCivilStatus(String cs)         { this.civilStatus = cs; }
-
-    public String getPlaceOfBirth()                 { return placeOfBirth; }
-    public void   setPlaceOfBirth(String p)         { this.placeOfBirth = p; }
+    public String getContactNo()                    { return contactNo; }
+    public void   setContactNo(String n)            { this.contactNo = n; }
 
     public String getHomeAddress()                  { return homeAddress; }
     public void   setHomeAddress(String a)          { this.homeAddress = a; }
 
-    public String getStatus()                       { return status; }
-    public void   setStatus(String s)               { this.status = s; }
+    public String getCivilStatus()                  { return civilStatus; }
+    public void   setCivilStatus(String cs)         { this.civilStatus = cs; }
 
-    public boolean isPending()  { return "PENDING".equalsIgnoreCase(status); }
-    public boolean isApproved() { return "APPROVED".equalsIgnoreCase(status); }
-    public boolean isDenied()   { return "DENIED".equalsIgnoreCase(status); }
+    public String getSpouseName()                   { return spouseName; }
+    public void   setSpouseName(String s)           { this.spouseName = s; }
+
+    public String getOccupation()                   { return occupation; }
+    public void   setOccupation(String o)           { this.occupation = o; }
+
+    public String getEmployerOfficeAndAddress()      { return employerOfficeAndAddress; }
+    public void   setEmployerOfficeAndAddress(String e) { this.employerOfficeAndAddress = e; }
+
+    public String getFatherName()                   { return fatherName; }
+    public void   setFatherName(String f)           { this.fatherName = f; }
+
+    public String getMotherName()                   { return motherName; }
+    public void   setMotherName(String m)           { this.motherName = m; }
 }

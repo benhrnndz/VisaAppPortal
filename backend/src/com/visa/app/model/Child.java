@@ -6,46 +6,30 @@ package com.visa.app.model;
  *  OOP CONCEPT: Inheritance + Polymorphism + Encapsulation
  * ============================================================
  *
- * INHERITANCE  — extends Person, inheriting firstName, lastName,
- *                dateOfBirth without re-declaring them.
+ * CORRECTED: Per the ERD, ChildT's foreign key is Applicant_ID
+ * (a child "belongs_to" an Applicant), NOT Application_ID. The old
+ * version of this class wrongly attached children to applications.
  *
- * POLYMORPHISM — Overrides getProfileSummary() with child-specific output.
- *                Called through a Person reference, it behaves differently
- *                from Applicant — same method name, different result.
- *
- * Maps to: `children` table (id, application_id, name, age).
- * Note: The frontend stores one combined "name" string in the DB.
- *       We split it into firstName/lastName for the OOP model here.
+ * Maps to: `children` table (child_id, applicant_id, child_name, child_age).
  */
 public class Child extends Person {
 
     // ── ENCAPSULATION: private fields ─────────────────────────────────────────
-    private int id;
-    private int applicationId;
+    private int childId;
+    private int applicantId;   // FK -> applicants(applicant_id)
     private int age;
 
-    // ── Constructors ──────────────────────────────────────────────────────────
-
     /** Full constructor — used when loading a row from the `children` table. */
-    public Child(int id, int applicationId,
-                 String firstName, String lastName, String dateOfBirth, int age) {
-        super(firstName, lastName, dateOfBirth);   // INHERITANCE: calls Person(...)
-        this.id            = id;
-        this.applicationId = applicationId;
-        this.age           = age;
-    }
-
-    /**
-     * Convenience constructor that accepts the combined name string stored by
-     * the existing frontend (e.g., "Maria Cruz"). Splits on the first space.
-     */
-    public Child(int id, int applicationId, String combinedName, int age) {
-        this(id, applicationId, splitFirst(combinedName), splitLast(combinedName), "", age);
+    public Child(int childId, int applicantId, String childName, int age) {
+        super(splitFirst(childName), splitLast(childName), "");   // INHERITANCE
+        this.childId     = childId;
+        this.applicantId = applicantId;
+        this.age          = age;
     }
 
     /** Brand-new child, not yet persisted. */
-    public Child(String combinedName, int age) {
-        this(-1, -1, combinedName, age);
+    public Child(String childName, int age) {
+        this(-1, -1, childName, age);
     }
 
     // ── Helpers for splitting combined name ───────────────────────────────────
@@ -62,21 +46,20 @@ public class Child extends Person {
     // ── POLYMORPHISM: override getProfileSummary() ────────────────────────────
     @Override
     public String getProfileSummary() {
-        return "Dependent Child: " + getFullName()
+        return "Child: " + getFullName()
              + " | Age: " + age
-             + " | Application ID: " + applicationId;
+             + " | Applicant ID: " + applicantId;
     }
 
     // ── Getters & Setters (Encapsulation) ─────────────────────────────────────
-    public int  getId()                       { return id; }
-    public void setId(int id)                 { this.id = id; }
+    public int  getChildId()                  { return childId; }
+    public void setChildId(int id)            { this.childId = id; }
 
-    public int  getApplicationId()            { return applicationId; }
-    public void setApplicationId(int appId)   { this.applicationId = appId; }
+    public int  getApplicantId()              { return applicantId; }
+    public void setApplicantId(int id)        { this.applicantId = id; }
 
     public int  getAge()                      { return age; }
     public void setAge(int age)               { this.age = age; }
 
-    /** Returns the combined full name — compatible with the existing DB column. */
     public String getCombinedName()           { return getFullName(); }
 }

@@ -2,27 +2,35 @@ package com.visa.app.model;
 
 /**
  * ============================================================
- *  ABSTRACT BASE CLASS: Document
- *  OOP CONCEPT: Abstraction + Encapsulation + Polymorphism
+ *  CLASS: Document
+ *  OOP CONCEPT: Encapsulation
  * ============================================================
  *
- * Second inheritance hierarchy in the project (alongside Person).
- * Passport and SupportingDocument extend this class.
+ * CORRECTED: Per the ERD, DocumentT only ever has
+ * (Document_ID, Application_ID, Document_Type). It never carries
+ * passport fields — those live in PassportT, a separate entity.
+ * Document is therefore no longer an abstract base class with a
+ * Passport subtype; SupportingDocument was the only real kind of
+ * document, so this class is now concrete on its own.
  *
  * Maps to: `documents` table.
  */
-public abstract class Document {
+public class Document {
 
-    // ── ENCAPSULATION: private shared fields ──────────────────────────────────
-    private int    id;
-    private int    applicationId;
-    private String documentType;
+    // ── ENCAPSULATION: private fields, matching DocumentT exactly ─────────────
+    private int    id;             // Document_ID
+    private int    applicationId;  // Application_ID (FK)
+    private String documentType;   // Document_Type
 
     // ── Constructor ───────────────────────────────────────────────────────────
     public Document(int id, int applicationId, String documentType) {
         this.id            = id;
         this.applicationId = applicationId;
         this.documentType  = documentType;
+    }
+
+    public Document(String documentType) {
+        this(-1, -1, documentType);
     }
 
     // ── Getters & Setters (Encapsulation) ─────────────────────────────────────
@@ -35,12 +43,9 @@ public abstract class Document {
     public String getDocumentType()             { return documentType; }
     public void   setDocumentType(String dt)    { this.documentType = dt; }
 
-    // ── POLYMORPHISM: abstract method each subclass overrides ──────────────────
-    /**
-     * Passport   → "Passport #P1234 | Issued by: DFA | Valid until: 2030/01/01"
-     * Supporting → "Air Ticket"
-     */
-    public abstract String getDocumentSummary();
+    public String getDocumentSummary() {
+        return "Supporting Document: " + documentType;
+    }
 
     @Override
     public String toString() {

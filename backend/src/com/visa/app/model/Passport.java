@@ -3,56 +3,53 @@ package com.visa.app.model;
 /**
  * ============================================================
  *  MODEL: Passport
- *  OOP CONCEPT: Inheritance + Polymorphism + Encapsulation
+ *  OOP CONCEPT: Encapsulation
  * ============================================================
  *
- * Extends Document and adds passport-specific fields.
- * Maps to `documents` rows where document_type = 'Original Passport'.
+ * CORRECTED: Per the ERD, PassportT is its own standalone entity —
+ * it is NOT a type of Document. The old version of this class
+ * extended Document, which was wrong: a passport "belongs_to" an
+ * Applicant and is "used_in"/"requires" an Application, but it is
+ * never a row in the documents table.
+ *
+ * Maps to: `passports` table (passport_no, issued_by, date_of_issue, valid_until).
  */
-public class Passport extends Document {
+public class Passport {
 
-    // ── ENCAPSULATION: private passport-specific fields ───────────────────────
-    private String passportNumber;
-    private String issuingAuthority;
-    private String dateIssued;    // YYYY/MM/DD
-    private String validityDate;  // YYYY/MM/DD
+    // ── ENCAPSULATION: private fields, matching PassportT exactly ─────────────
+    private String passportNo;     // PK
+    private String issuedBy;
+    private String dateOfIssue;    // YYYY/MM/DD
+    private String validUntil;     // YYYY/MM/DD
 
-    // ── Full constructor ──────────────────────────────────────────────────────
-    public Passport(int id, int applicationId,
-                    String passportNumber, String issuingAuthority,
-                    String dateIssued, String validityDate) {
-        super(id, applicationId, "Original Passport");   // INHERITANCE
-        this.passportNumber   = passportNumber;
-        this.issuingAuthority = issuingAuthority;
-        this.dateIssued       = dateIssued;
-        this.validityDate     = validityDate;
+    // ── Full constructor — used when loading a row from the `passports` table ──
+    public Passport(String passportNo, String issuedBy, String dateOfIssue, String validUntil) {
+        this.passportNo  = passportNo;
+        this.issuedBy    = issuedBy;
+        this.dateOfIssue = dateOfIssue;
+        this.validUntil  = validUntil;
     }
 
-    /** New passport not yet persisted. */
-    public Passport(String passportNumber, String issuingAuthority,
-                    String dateIssued, String validityDate) {
-        this(-1, -1, passportNumber, issuingAuthority, dateIssued, validityDate);
-    }
-
-    // ── POLYMORPHISM: override getDocumentSummary() ───────────────────────────
-    @Override
     public String getDocumentSummary() {
-        return "Passport #" + passportNumber
-             + " | Issued by: " + issuingAuthority
-             + " | Date Issued: " + dateIssued
-             + " | Valid until: " + validityDate;
+        return "Passport #" + passportNo
+             + " | Issued by: " + issuedBy
+             + " | Date Issued: " + dateOfIssue
+             + " | Valid until: " + validUntil;
     }
 
     // ── Getters & Setters (Encapsulation) ─────────────────────────────────────
-    public String getPassportNumber()               { return passportNumber; }
-    public void   setPassportNumber(String n)       { this.passportNumber = n; }
+    public String getPassportNo()              { return passportNo; }
+    public void   setPassportNo(String n)      { this.passportNo = n; }
 
-    public String getIssuingAuthority()             { return issuingAuthority; }
-    public void   setIssuingAuthority(String a)     { this.issuingAuthority = a; }
+    public String getIssuedBy()                { return issuedBy; }
+    public void   setIssuedBy(String a)        { this.issuedBy = a; }
 
-    public String getDateIssued()                   { return dateIssued; }
-    public void   setDateIssued(String d)           { this.dateIssued = d; }
+    public String getDateOfIssue()             { return dateOfIssue; }
+    public void   setDateOfIssue(String d)     { this.dateOfIssue = d; }
 
-    public String getValidityDate()                 { return validityDate; }
-    public void   setValidityDate(String v)         { this.validityDate = v; }
+    public String getValidUntil()              { return validUntil; }
+    public void   setValidUntil(String v)      { this.validUntil = v; }
+
+    @Override
+    public String toString() { return getDocumentSummary(); }
 }
