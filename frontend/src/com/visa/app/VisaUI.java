@@ -2143,7 +2143,7 @@ class ApplicantDashboardPanel extends JPanel {
         tableTitle.setForeground(Theme.TEXT_DARK);
         tableContainer.add(tableTitle, BorderLayout.NORTH);
 
-        String[] columns = { "ID", "Full Name", "Citizenship", "Submission Date", "Status" };
+        String[] columns = { "ID", "Full Name", "Citizenship", "Birth Date", "Status" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
