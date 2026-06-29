@@ -299,6 +299,38 @@ class Theme {
     return inputDate.isAfter(java.time.LocalDate.now());
     }
 
+    // ── INPUT VALIDATION HELPERS ─────────────────────────────────────────────
+
+/**
+ * Validates a contact/phone number.
+ * Accepts: optional leading +, then 7-15 digits (spaces/dashes allowed).
+ * Examples: "+63 917 123 4567", "09171234567", "+1-800-555-0199"
+ */
+public static boolean isValidContact(String contact) {
+    if (contact == null || contact.isBlank()) return false;
+    String stripped = contact.replaceAll("[\\s\\-]", "");   // ← \\s and \\-
+    return stripped.matches("\\+?\\d{7,15}");               // ← \\+ and \\d
+}
+
+/**
+ * Validates a name field.
+ * Allows: letters, spaces, hyphens, apostrophes, periods (for Jr., Sr., etc.)
+ * Min 2 characters. Rejects pure numeric strings.
+ */
+public static boolean isValidName(String name) {
+    if (name == null || name.trim().length() < 2) return false;
+    return name.trim().matches("[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ .'\\ -]{1,}");
+}
+
+/**
+ * Validates a passport number.
+ * Must be 6-20 alphanumeric characters (no spaces).
+ */
+public static boolean isValidPassportNo(String passportNo) {
+    if (passportNo == null || passportNo.isBlank()) return false;
+    return passportNo.trim().matches("[A-Za-z0-9]{6,20}");  // ← this one was fine
+}
+
     public static void setupAutomaticDateField(JTextField textField) {
         textField.addKeyListener(new java.awt.event.KeyAdapter() {
             private boolean isDeleting = false;
@@ -1642,6 +1674,13 @@ class VisaApplicationWizard extends JPanel {
             return;
         }
 
+        if (!Theme.isValidPassportNo(passportNum)) {
+            JOptionPane.showMessageDialog(this,
+                    "Passport number must be 6\u201320 alphanumeric characters (no spaces).",
+                    "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         if (!Theme.isValidDateString(passportIssued)) {
             JOptionPane.showMessageDialog(this,
                     "Please enter a valid Passport Issue Date in YYYY/MM/DD format (valid month and days).",
@@ -1700,6 +1739,20 @@ class VisaApplicationWizard extends JPanel {
         if (!email.contains("@") || !email.contains(".")) {
             JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Validation Error",
                     JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidContact(contact)) {
+            JOptionPane.showMessageDialog(this,
+                    "Contact number must be 7\u201315 digits (e.g. +63 917 123 4567 or 09171234567).",
+                    "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidName(name)) {
+            JOptionPane.showMessageDialog(this,
+                    "Full name must contain only letters, spaces, hyphens, or apostrophes (min. 2 characters).",
+                    "Validation Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1833,6 +1886,26 @@ class VisaApplicationWizard extends JPanel {
             return;
         }
 
+        if (!email.contains("@") || !email.contains(".")) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidContact(contact)) {
+            JOptionPane.showMessageDialog(this,
+                    "Contact number must be 7–15 digits (e.g. +63 917 123 4567 or 09171234567).",
+                    "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidName(name)) {
+            JOptionPane.showMessageDialog(this,
+                    "Full name must contain only letters, spaces, hyphens, or apostrophes (min. 2 characters).",
+                    "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         String passportNum = passportNumField.getText().trim();
         String passportAuth = passportAuthField.getText().trim();
         String passportIssued = passportIssuedField.getText().trim();
@@ -1842,6 +1915,13 @@ class VisaApplicationWizard extends JPanel {
             JOptionPane.showMessageDialog(this, "Please fill in all required Passport fields on Page 2.",
                     "Validation Error",
                     JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!Theme.isValidPassportNo(passportNum)) {
+            JOptionPane.showMessageDialog(this,
+                    "Passport number must be 6\u201320 alphanumeric characters (no spaces).",
+                    "Validation Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -2138,10 +2218,29 @@ class ApplicantDashboardPanel extends JPanel {
         JPanel tableContainer = new JPanel(new BorderLayout(10, 10));
         tableContainer.setOpaque(false);
 
+        // ── Search bar (Search Record Module) ─────────────────────────────
+        JPanel searchBar = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 4));
+        searchBar.setOpaque(false);
+        JLabel searchLbl = new JLabel("Search:");
+        searchLbl.setFont(Theme.BOLD_FONT);
+        JTextField searchBox = Theme.createTextField(22);
+        searchBox.setPreferredSize(new Dimension(220, 32));
+        JButton searchBtn = Theme.createPrimaryButton("Search");
+        JButton clearBtn  = Theme.createSecondaryButton("Clear");
+        searchBar.add(searchLbl);
+        searchBar.add(searchBox);
+        searchBar.add(searchBtn);
+        searchBar.add(clearBtn);
         JLabel tableTitle = new JLabel("Your Visa Applications");
         tableTitle.setFont(Theme.HEADER_FONT);
         tableTitle.setForeground(Theme.TEXT_DARK);
-        tableContainer.add(tableTitle, BorderLayout.NORTH);
+
+        // Wrap title + search bar into one NORTH component
+        JPanel northWrap = new JPanel(new BorderLayout(0, 4));
+        northWrap.setOpaque(false);
+        northWrap.add(tableTitle, BorderLayout.NORTH);
+        northWrap.add(searchBar,  BorderLayout.SOUTH);
+        tableContainer.add(northWrap, BorderLayout.NORTH);
 
         String[] columns = { "ID", "Full Name", "Citizenship", "Birth Date", "Status" };
         tableModel = new DefaultTableModel(columns, 0) {
@@ -2204,6 +2303,9 @@ class ApplicantDashboardPanel extends JPanel {
         editBtn.addActionListener(e -> handleEditApp());
         deleteBtn.addActionListener(e -> handleDeleteApp());
         refreshBtn.addActionListener(e -> refreshData());
+        searchBtn.addActionListener(e -> handleSearch(searchBox.getText().trim(), tableModel));
+        searchBox.addActionListener(e -> searchBtn.doClick());
+        clearBtn.addActionListener(e -> { searchBox.setText(""); refreshData(); });
 
         refreshData();
     }
@@ -2220,6 +2322,44 @@ class ApplicantDashboardPanel extends JPanel {
                     app.getBirthDate(),
                     app.getStatus()
             });
+        }
+    }
+
+    /**
+     * Search Record Module — Q5: WHERE + LIKE
+     * Lets the applicant search their own applications by keyword.
+     * Called from a search bar above the table.
+     */
+    public void handleSearch(String keyword, DefaultTableModel targetModel) {
+        targetModel.setRowCount(0);
+        if (keyword == null || keyword.isBlank()) {
+            // Empty keyword — restore full list
+            for (VisaApplication app : userAppsList) {
+                targetModel.addRow(new Object[] {
+                        app.getId(), app.getFullName(),
+                        app.getCitizenship(), app.getBirthDate(), app.getStatus()
+                });
+            }
+            return;
+        }
+        String kw = keyword.toLowerCase();
+        boolean found = false;
+        for (VisaApplication app : userAppsList) {
+            if (app.getFullName().toLowerCase().contains(kw)
+                    || app.getCitizenship().toLowerCase().contains(kw)
+                    || app.getStatus().toLowerCase().contains(kw)
+                    || String.valueOf(app.getId()).contains(kw)) {
+                targetModel.addRow(new Object[] {
+                        app.getId(), app.getFullName(),
+                        app.getCitizenship(), app.getBirthDate(), app.getStatus()
+                });
+                found = true;
+            }
+        }
+        if (!found) {
+            JOptionPane.showMessageDialog(this,
+                    "No applications found matching: \"" + keyword + "\"",
+                    "No Results", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -2296,6 +2436,10 @@ class AdminDashboardPanel extends JPanel {
     private DefaultTableModel tableModel;
     private List<VisaApplication> applicationsList;
 
+    // ── Fields for Search tab ─────────────────────────────────────────────────
+    private JTextField searchField;
+    private DefaultTableModel searchTableModel;
+
     public AdminDashboardPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
 
@@ -2303,75 +2447,35 @@ class AdminDashboardPanel extends JPanel {
         setLayout(new BorderLayout(15, 15));
         setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
 
+        // ── Header ────────────────────────────────────────────────────────────
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(Theme.WHITE);
         topPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.BORDER_COLOR),
                 BorderFactory.createEmptyBorder(15, 20, 15, 20)));
-
         JLabel welcomeLabel = new JLabel("Administrator Dashboard");
         welcomeLabel.setFont(Theme.SUBTITLE_FONT);
         welcomeLabel.setForeground(Theme.PRIMARY_BLUE);
         topPanel.add(welcomeLabel, BorderLayout.WEST);
-
         add(topPanel, BorderLayout.NORTH);
 
-        JPanel tableContainer = new JPanel(new BorderLayout(10, 10));
-        tableContainer.setOpaque(false);
+        // ── Tabbed center panel ────────────────────────────────────────────────
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(Theme.BOLD_FONT);
+        tabbedPane.addTab("All Applications", buildApplicationsTab());
+        tabbedPane.addTab("Search Records",   buildSearchTab());
+        tabbedPane.addTab("Reports",           buildReportTab());
+        add(tabbedPane, BorderLayout.CENTER);
 
-        JLabel tableTitle = new JLabel("All Visa Application Submissions");
-        tableTitle.setFont(Theme.HEADER_FONT);
-        tableTitle.setForeground(Theme.TEXT_DARK);
-        tableContainer.add(tableTitle, BorderLayout.NORTH);
-
-        String[] columns = { "ID", "Email", "Full Name", "Citizenship", "Date of Application", "Status" };
-        tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        appTable = new JTable(tableModel);
-        appTable.setFont(Theme.REGULAR_FONT);
-        appTable.setRowHeight(26);
-        appTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        appTable.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                String status = (String) value;
-                setFont(Theme.BOLD_FONT);
-                setHorizontalAlignment(SwingConstants.CENTER);
-
-                if (!isSelected) {
-                    if ("APPROVED".equalsIgnoreCase(status)) {
-                        c.setForeground(Theme.STATUS_APPROVED);
-                    } else if ("PENDING".equalsIgnoreCase(status)) {
-                        c.setForeground(Theme.STATUS_PENDING);
-                    } else {
-                        c.setForeground(Theme.STATUS_DENIED);
-                    }
-                }
-                return c;
-            }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(appTable);
-        scrollPane.setBorder(BorderFactory.createLineBorder(Theme.BORDER_COLOR));
-        tableContainer.add(scrollPane, BorderLayout.CENTER);
-
-        add(tableContainer, BorderLayout.CENTER);
-
+        // ── Sidebar actions (operate on the main applications table) ──────────
         JPanel sidebar = new JPanel(new GridLayout(6, 1, 0, 10));
         sidebar.setOpaque(false);
         Theme.setComponentSizes(sidebar, 200, 300);
 
-        JButton viewBtn = Theme.createPrimaryButton("View Full Details");
+        JButton viewBtn    = Theme.createPrimaryButton("View Full Details");
         JButton approveBtn = Theme.createButton("Approve Visa", Theme.STATUS_APPROVED, Theme.WHITE);
-        JButton denyBtn = Theme.createDangerButton("Deny Visa");
-        JButton deleteBtn = Theme.createSecondaryButton("Delete Record");
+        JButton denyBtn    = Theme.createDangerButton("Deny Visa");
+        JButton deleteBtn  = Theme.createSecondaryButton("Delete Record");
         JButton refreshBtn = Theme.createSecondaryButton("Refresh List");
 
         sidebar.add(viewBtn);
@@ -2379,16 +2483,308 @@ class AdminDashboardPanel extends JPanel {
         sidebar.add(denyBtn);
         sidebar.add(deleteBtn);
         sidebar.add(refreshBtn);
-
         add(sidebar, BorderLayout.EAST);
 
-        viewBtn.addActionListener(e -> handleViewDetails());
+        viewBtn.addActionListener(e    -> handleViewDetails());
         approveBtn.addActionListener(e -> handleUpdateStatus("APPROVED"));
-        denyBtn.addActionListener(e -> handleUpdateStatus("DENIED"));
-        deleteBtn.addActionListener(e -> handleDeleteRecord());
+        denyBtn.addActionListener(e    -> handleUpdateStatus("DENIED"));
+        deleteBtn.addActionListener(e  -> handleDeleteRecord());
         refreshBtn.addActionListener(e -> refreshData());
 
         refreshData();
+    }
+
+    // ── TAB 1: All Applications ───────────────────────────────────────────────
+    private JPanel buildApplicationsTab() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+        JLabel tableTitle = new JLabel("All Visa Application Submissions");
+        tableTitle.setFont(Theme.HEADER_FONT);
+        tableTitle.setForeground(Theme.TEXT_DARK);
+        panel.add(tableTitle, BorderLayout.NORTH);
+
+        String[] columns = { "ID", "Email", "Full Name", "Citizenship", "Date of Application", "Status" };
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override public boolean isCellEditable(int row, int column) { return false; }
+        };
+        appTable = new JTable(tableModel);
+        appTable.setFont(Theme.REGULAR_FONT);
+        appTable.setRowHeight(26);
+        appTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        appTable.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                String status = value == null ? "" : (String) value;
+                setFont(Theme.BOLD_FONT);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                if (!isSelected) {
+                    if ("APPROVED".equalsIgnoreCase(status))     c.setForeground(Theme.STATUS_APPROVED);
+                    else if ("PENDING".equalsIgnoreCase(status)) c.setForeground(Theme.STATUS_PENDING);
+                    else                                         c.setForeground(Theme.STATUS_DENIED);
+                }
+                return c;
+            }
+        });
+        JScrollPane scrollPane = new JScrollPane(appTable);
+        scrollPane.setBorder(BorderFactory.createLineBorder(Theme.BORDER_COLOR));
+        panel.add(scrollPane, BorderLayout.CENTER);
+        return panel;
+    }
+
+    // ── TAB 2: Search Records ─────────────────────────────────────────────────
+    private JPanel buildSearchTab() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+        // Search bar row
+        JPanel searchBar = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 0));
+        searchBar.setOpaque(false);
+        JLabel searchLbl = new JLabel("Search by name, citizenship, or status:");
+        searchLbl.setFont(Theme.BOLD_FONT);
+        searchLbl.setForeground(Theme.TEXT_DARK);
+        searchField = Theme.createTextField(30);
+        searchField.setPreferredSize(new Dimension(280, 34));
+        JButton searchBtn  = Theme.createPrimaryButton("Search");
+        JButton clearBtn   = Theme.createSecondaryButton("Clear / Show All");
+
+        searchBar.add(searchLbl);
+        searchBar.add(searchField);
+        searchBar.add(searchBtn);
+        searchBar.add(clearBtn);
+        panel.add(searchBar, BorderLayout.NORTH);
+
+        // Results table
+        String[] cols = { "App ID", "Full Name", "Citizenship", "Status", "Docs Submitted" };
+        searchTableModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int row, int column) { return false; }
+        };
+        JTable searchTable = new JTable(searchTableModel);
+        searchTable.setFont(Theme.REGULAR_FONT);
+        searchTable.setRowHeight(26);
+        searchTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        // Color-code Status column (index 3)
+        searchTable.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                String status = value == null ? "" : (String) value;
+                setFont(Theme.BOLD_FONT);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                if (!isSelected) {
+                    if ("APPROVED".equalsIgnoreCase(status))     c.setForeground(Theme.STATUS_APPROVED);
+                    else if ("PENDING".equalsIgnoreCase(status)) c.setForeground(Theme.STATUS_PENDING);
+                    else                                         c.setForeground(Theme.STATUS_DENIED);
+                }
+                return c;
+            }
+        });
+
+        JScrollPane scroll = new JScrollPane(searchTable);
+        scroll.setBorder(BorderFactory.createLineBorder(Theme.BORDER_COLOR));
+        panel.add(scroll, BorderLayout.CENTER);
+
+        // "No results" label shown when search returns nothing
+        JLabel noResultsLabel = new JLabel("No records found matching your search.", SwingConstants.CENTER);
+        noResultsLabel.setFont(Theme.BOLD_FONT);
+        noResultsLabel.setForeground(Theme.TEXT_MUTED);
+        noResultsLabel.setVisible(false);
+        panel.add(noResultsLabel, BorderLayout.SOUTH);
+
+        // Wire search button — Q5: WHERE + LIKE
+        searchBtn.addActionListener(e -> {
+            String keyword = searchField.getText().trim();
+            if (keyword.isEmpty()) {
+                JOptionPane.showMessageDialog(panel,
+                        "Please enter a keyword to search.", "Empty Search",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            List<String[]> results = BackendBridge.getInstance().searchApplicationsAsRows(keyword); // Q5
+            searchTableModel.setRowCount(0);
+            if (results.isEmpty()) {
+                noResultsLabel.setText("No records found for: \"" + keyword + "\"");
+                noResultsLabel.setVisible(true);
+            } else {
+                noResultsLabel.setVisible(false);
+                for (String[] row : results) {
+                    searchTableModel.addRow(row);
+                }
+            }
+        });
+
+        // Allow pressing Enter in the search field
+        searchField.addActionListener(e -> searchBtn.doClick());
+
+        // Clear button reloads all records
+        clearBtn.addActionListener(e -> {
+            searchField.setText("");
+            noResultsLabel.setVisible(false);
+            List<String[]> all = BackendBridge.getInstance().getApplicationsWithDocumentCount(); // Q6
+            searchTableModel.setRowCount(0);
+            for (String[] row : all) {
+                searchTableModel.addRow(row);
+            }
+        });
+
+        // Pre-load all records when tab is opened
+        List<String[]> all = BackendBridge.getInstance().getApplicationsWithDocumentCount();
+        for (String[] row : all) {
+            searchTableModel.addRow(row);
+        }
+
+        return panel;
+    }
+
+    // ── TAB 3: Report Generation ──────────────────────────────────────────────
+    private JPanel buildReportTab() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+        JLabel title = new JLabel("System Reports & Summaries");
+        title.setFont(Theme.HEADER_FONT);
+        title.setForeground(Theme.TEXT_DARK);
+        panel.add(title, BorderLayout.NORTH);
+
+        // ── Summary stats cards row ───────────────────────────────────────────
+        JPanel statsRow = new JPanel(new java.awt.GridLayout(1, 4, 12, 0));
+        statsRow.setOpaque(false);
+        statsRow.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+
+        // Compute counts from the live DB
+        List<VisaApplication> all = DatabaseManager.getInstance().getAllApplications();
+        long total    = all.size();
+        long pending  = all.stream().filter(a -> "PENDING".equalsIgnoreCase(a.getStatus())).count();
+        long approved = all.stream().filter(a -> "APPROVED".equalsIgnoreCase(a.getStatus())).count();
+        long denied   = all.stream().filter(a -> "DENIED".equalsIgnoreCase(a.getStatus())).count();
+
+        statsRow.add(buildStatCard("Total Applications", String.valueOf(total),   Theme.PRIMARY_BLUE));
+        statsRow.add(buildStatCard("Pending",            String.valueOf(pending),  Theme.STATUS_PENDING));
+        statsRow.add(buildStatCard("Approved",           String.valueOf(approved), Theme.STATUS_APPROVED));
+        statsRow.add(buildStatCard("Denied",             String.valueOf(denied),   Theme.STATUS_DENIED));
+        panel.add(statsRow, BorderLayout.CENTER);  // will be replaced below
+
+        // ── Report tables panel (Q9 and Q10/Q11) ─────────────────────────────
+        JPanel tablesPanel = new JPanel();
+        tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
+        tablesPanel.setOpaque(false);
+
+        // Q9: 3-table JOIN — passport details
+        List<String[]> passportRows = BackendBridge.getInstance().getApplicantsWithPassportDetails();
+        String[] ppCols = { "Email", "Full Name", "Citizenship", "Status", "Passport No.", "Issued By", "Valid Until" };
+        JPanel q9Panel = buildReportTable(
+            "Q9 Report — Applicants with Passport Details (3-Table JOIN)",
+            ppCols, passportRows);
+        tablesPanel.add(q9Panel);
+        tablesPanel.add(Box.createVerticalStrut(16));
+
+        // Q10: Fully-documented applications
+        List<String[]> completeRows = BackendBridge.getInstance().getCompleteApplications();
+        String[] compCols = { "App ID", "Full Name", "Citizenship", "Status" };
+        JPanel q10Panel = buildReportTable(
+            "Q10 Report — Fully-Documented Applications (Subquery + HAVING)",
+            compCols, completeRows);
+        tablesPanel.add(q10Panel);
+        tablesPanel.add(Box.createVerticalStrut(16));
+
+        // Q11: Expiring passports
+        List<String[]> expiringRows = BackendBridge.getInstance().getApplicationsWithExpiringPassports();
+        String[] expCols = { "Full Name", "Citizenship", "Passport No.", "App Date", "Valid Until", "Days Left", "Urgency" };
+        JPanel q11Panel = buildReportTable(
+            "Q11 Report — Passports Expiring Within 180 Days (Correlated Subquery)",
+            expCols, expiringRows);
+        tablesPanel.add(q11Panel);
+
+        // Combine stats + tables into a scrollable pane
+        JPanel combined = new JPanel(new BorderLayout(0, 12));
+        combined.setOpaque(false);
+        combined.add(statsRow,   BorderLayout.NORTH);
+        combined.add(tablesPanel, BorderLayout.CENTER);
+
+        JScrollPane scroll = new JScrollPane(combined);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(14);
+
+        // Replace the placeholder center with the full scroll panel
+        panel.remove(statsRow);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        // Refresh button
+        JButton refreshBtn = Theme.createSecondaryButton("↻  Refresh Report Data");
+        refreshBtn.addActionListener(e -> {
+            // Rebuild the tab content by re-switching to it
+            JTabbedPane tp = (JTabbedPane) panel.getParent();
+            if (tp != null) {
+                int idx = tp.indexOfComponent(panel);
+                tp.setComponentAt(idx, buildReportTab());
+                tp.setSelectedIndex(idx);
+            }
+        });
+        panel.add(refreshBtn, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    /** Builds a small colored stat card for the report summary row. */
+    private JPanel buildStatCard(String label, String value, Color color) {
+        JPanel card = new JPanel(new BorderLayout(4, 4));
+        card.setBackground(Theme.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER_COLOR),
+                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
+        JLabel valLabel = new JLabel(value, SwingConstants.CENTER);
+        valLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        valLabel.setForeground(color);
+        JLabel lbl = new JLabel(label, SwingConstants.CENTER);
+        lbl.setFont(Theme.REGULAR_FONT);
+        lbl.setForeground(Theme.TEXT_MUTED);
+        card.add(valLabel, BorderLayout.CENTER);
+        card.add(lbl,      BorderLayout.SOUTH);
+        return card;
+    }
+
+    /** Builds a labeled report table panel from column headers and data rows. */
+    private JPanel buildReportTable(String titleText, String[] columns, List<String[]> rows) {
+        JPanel panel = new JPanel(new BorderLayout(6, 6));
+        panel.setOpaque(false);
+
+        JLabel lbl = new JLabel(titleText);
+        lbl.setFont(Theme.BOLD_FONT);
+        lbl.setForeground(Theme.PRIMARY_BLUE);
+        panel.add(lbl, BorderLayout.NORTH);
+
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        for (String[] row : rows) {
+            model.addRow(row);
+        }
+        if (rows.isEmpty()) {
+            model.addRow(new String[rows.size() > 0 ? rows.get(0).length : columns.length]);
+            // show placeholder
+            JLabel empty = new JLabel("  No data available for this report.", SwingConstants.LEFT);
+            empty.setFont(Theme.SMALL_FONT);
+            empty.setForeground(Theme.TEXT_MUTED);
+            panel.add(empty, BorderLayout.SOUTH);
+        }
+
+        JTable table = new JTable(model);
+        table.setFont(Theme.REGULAR_FONT);
+        table.setRowHeight(24);
+        table.setEnabled(false);
+        table.getTableHeader().setFont(Theme.BOLD_FONT);
+
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setPreferredSize(new Dimension(600, rows.isEmpty() ? 60 : Math.min(rows.size() * 26 + 30, 180)));
+        scroll.setBorder(BorderFactory.createLineBorder(Theme.BORDER_COLOR));
+        panel.add(scroll, BorderLayout.CENTER);
+        return panel;
     }
 
     public void refreshData() {
@@ -2406,6 +2802,7 @@ class AdminDashboardPanel extends JPanel {
             });
         }
     }
+
 
     private VisaApplication getSelectedApplication() {
         int row = appTable.getSelectedRow();
@@ -2480,7 +2877,4 @@ class AdminDashboardPanel extends JPanel {
             }
         }
     }
-
-    
-
 }
