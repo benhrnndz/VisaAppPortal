@@ -301,35 +301,36 @@ class Theme {
 
     // ── INPUT VALIDATION HELPERS ─────────────────────────────────────────────
 
-/**
- * Validates a contact/phone number.
- * Accepts: optional leading +, then 7-15 digits (spaces/dashes allowed).
- * Examples: "+63 917 123 4567", "09171234567", "+1-800-555-0199"
- */
-public static boolean isValidContact(String contact) {
-    if (contact == null || contact.isBlank()) return false;
-    String stripped = contact.replaceAll("[\\s\\-]", "");   // ← \\s and \\-
-    return stripped.matches("\\+?\\d{7,15}");               // ← \\+ and \\d
-}
+    /**
+     * Validates a contact/phone number.
+     * Accepts: optional leading +, then 7-15 digits (spaces/dashes allowed).
+     * Examples: "+63 917 123 4567", "09171234567", "+1-800-555-0199"
+     */
+    public static boolean isValidContact(String contact) {
+        if (contact == null || contact.isBlank()) return false;
+        // Strip spaces and dashes, then check for optional + and 7-15 digits
+        String stripped = contact.replaceAll("[\\s\\-]", "");
+        return stripped.matches("\\+?\\d{7,15}");
+    }
 
-/**
- * Validates a name field.
- * Allows: letters, spaces, hyphens, apostrophes, periods (for Jr., Sr., etc.)
- * Min 2 characters. Rejects pure numeric strings.
- */
-public static boolean isValidName(String name) {
-    if (name == null || name.trim().length() < 2) return false;
-    return name.trim().matches("[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ .'\\ -]{1,}");
-}
+    /**
+     * Validates a name field.
+     * Allows: letters, spaces, hyphens, apostrophes, periods (for Jr., Sr., etc.)
+     * Min 2 characters. Rejects pure numeric strings.
+     */
+    public static boolean isValidName(String name) {
+        if (name == null || name.trim().length() < 2) return false;
+        return name.trim().matches("[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ .'\\-]{1,}");
+    }
 
-/**
- * Validates a passport number.
- * Must be 6-20 alphanumeric characters (no spaces).
- */
-public static boolean isValidPassportNo(String passportNo) {
-    if (passportNo == null || passportNo.isBlank()) return false;
-    return passportNo.trim().matches("[A-Za-z0-9]{6,20}");  // ← this one was fine
-}
+    /**
+     * Validates a passport number.
+     * Must be 6-20 alphanumeric characters (no spaces).
+     */
+    public static boolean isValidPassportNo(String passportNo) {
+        if (passportNo == null || passportNo.isBlank()) return false;
+        return passportNo.trim().matches("[A-Za-z0-9]{6,20}");
+    }
 
     public static void setupAutomaticDateField(JTextField textField) {
         textField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -2242,7 +2243,7 @@ class ApplicantDashboardPanel extends JPanel {
         northWrap.add(searchBar,  BorderLayout.SOUTH);
         tableContainer.add(northWrap, BorderLayout.NORTH);
 
-        String[] columns = { "ID", "Full Name", "Citizenship", "Birth Date", "Status" };
+        String[] columns = { "Application ID", "Passport Used", "Date of Application", "Status" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -2254,7 +2255,7 @@ class ApplicantDashboardPanel extends JPanel {
         appTable.setRowHeight(26);
         appTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        appTable.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
+        appTable.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                     boolean hasFocus, int row, int column) {
@@ -2315,11 +2316,20 @@ class ApplicantDashboardPanel extends JPanel {
         userAppsList = DatabaseManager.getInstance().getApplicationsByUserId(currentUser.getId());
         BackendBridge.getInstance().getApplicantsWithPassportDetails(); // Q9: 3-table JOIN
         for (VisaApplication app : userAppsList) {
+            String passportNo = "N/A";
+            if (app.getDocuments() != null) {
+                for (Document doc : app.getDocuments()) {
+                    if ("Original Passport".equalsIgnoreCase(doc.getDocumentType())
+                            && !doc.getPassportNumber().isBlank()) {
+                        passportNo = doc.getPassportNumber();
+                        break;
+                    }
+                }
+            }
             tableModel.addRow(new Object[] {
                     app.getId(),
-                    app.getFullName(),
-                    app.getCitizenship(),
-                    app.getBirthDate(),
+                    passportNo,
+                    app.getDateOfApp(),
                     app.getStatus()
             });
         }
@@ -2335,9 +2345,17 @@ class ApplicantDashboardPanel extends JPanel {
         if (keyword == null || keyword.isBlank()) {
             // Empty keyword — restore full list
             for (VisaApplication app : userAppsList) {
+                String pNo = "N/A";
+                if (app.getDocuments() != null) {
+                    for (Document doc : app.getDocuments()) {
+                        if ("Original Passport".equalsIgnoreCase(doc.getDocumentType())
+                                && !doc.getPassportNumber().isBlank()) {
+                            pNo = doc.getPassportNumber(); break;
+                        }
+                    }
+                }
                 targetModel.addRow(new Object[] {
-                        app.getId(), app.getFullName(),
-                        app.getCitizenship(), app.getBirthDate(), app.getStatus()
+                        app.getId(), pNo, app.getDateOfApp(), app.getStatus()
                 });
             }
             return;
@@ -2345,13 +2363,21 @@ class ApplicantDashboardPanel extends JPanel {
         String kw = keyword.toLowerCase();
         boolean found = false;
         for (VisaApplication app : userAppsList) {
-            if (app.getFullName().toLowerCase().contains(kw)
-                    || app.getCitizenship().toLowerCase().contains(kw)
-                    || app.getStatus().toLowerCase().contains(kw)
-                    || String.valueOf(app.getId()).contains(kw)) {
+            String pNo = "N/A";
+            if (app.getDocuments() != null) {
+                for (Document doc : app.getDocuments()) {
+                    if ("Original Passport".equalsIgnoreCase(doc.getDocumentType())
+                            && !doc.getPassportNumber().isBlank()) {
+                        pNo = doc.getPassportNumber(); break;
+                    }
+                }
+            }
+            if (String.valueOf(app.getId()).contains(kw)
+                    || pNo.toLowerCase().contains(kw)
+                    || app.getDateOfApp().toLowerCase().contains(kw)
+                    || app.getStatus().toLowerCase().contains(kw)) {
                 targetModel.addRow(new Object[] {
-                        app.getId(), app.getFullName(),
-                        app.getCitizenship(), app.getBirthDate(), app.getStatus()
+                        app.getId(), pNo, app.getDateOfApp(), app.getStatus()
                 });
                 found = true;
             }
@@ -2716,7 +2742,7 @@ class AdminDashboardPanel extends JPanel {
         panel.add(scroll, BorderLayout.CENTER);
 
         // Refresh button
-        JButton refreshBtn = Theme.createSecondaryButton("↻  Refresh Report Data");
+        JButton refreshBtn = Theme.createSecondaryButton("Refresh Report Data");
         refreshBtn.addActionListener(e -> {
             // Rebuild the tab content by re-switching to it
             JTabbedPane tp = (JTabbedPane) panel.getParent();
@@ -2766,8 +2792,7 @@ class AdminDashboardPanel extends JPanel {
             model.addRow(row);
         }
         if (rows.isEmpty()) {
-            model.addRow(new String[rows.size() > 0 ? rows.get(0).length : columns.length]);
-            // show placeholder
+            model.addRow(new String[columns.length]);  // ← just this, clean
             JLabel empty = new JLabel("  No data available for this report.", SwingConstants.LEFT);
             empty.setFont(Theme.SMALL_FONT);
             empty.setForeground(Theme.TEXT_MUTED);
@@ -2877,4 +2902,7 @@ class AdminDashboardPanel extends JPanel {
             }
         }
     }
+
+    
+
 }
