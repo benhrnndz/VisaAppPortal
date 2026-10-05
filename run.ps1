@@ -1,30 +1,47 @@
-# Compile and Run VISA App
-# Run from VISA_App root: .\run.ps1
+# ============================================================
+#  VisaAppPortal Launch Script (Windows PowerShell)
+# ============================================================
+#
+# Usage:
+#   .\run.ps1          - Launches using Gradle Wrapper (default)
+#   .\run.ps1 -Maven   - Launches using Apache Maven
+#   .\run.ps1 -Direct  - Compiles and runs directly with javac/java
+#
+param(
+    [switch]$Maven,
+    [switch]$Direct
+)
 
-$BIN = "bin"
-$LIB = "frontend\lib\sqlite-jdbc.jar"
+$ErrorActionPreference = "Stop"
+Write-Host "=== VisaAppPortal Launch ===" -ForegroundColor Cyan
 
-if (-not (Test-Path $BIN)) {
-    New-Item -ItemType Directory -Path $BIN -Force | Out-Null
+if ($Maven) {
+    Write-Host "Building and launching with Maven..." -ForegroundColor Yellow
+    mvn compile exec:java
+    exit $LASTEXITCODE
 }
 
-Write-Host "Collecting source files..." -ForegroundColor Cyan
+if ($Direct) {
+    Write-Host "Compiling directly with javac..." -ForegroundColor Yellow
+    $BIN = "bin"
+    $LIB = "lib\sqlite-jdbc.jar"
+    if (-not (Test-Path $BIN)) {
+        New-Item -ItemType Directory -Path $BIN -Force | Out-Null
+    }
+    $javaFiles = Get-ChildItem -Path "src\main\java" -Filter *.java -Recurse | ForEach-Object { $_.FullName }
+    javac -cp $LIB -d $BIN -encoding UTF-8 $javaFiles
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Compilation successful! Starting UI..." -ForegroundColor Green
+        java -cp "$BIN;$LIB" com.visa.app.Main
+    }
+    exit $LASTEXITCODE
+}
 
-$frontendFiles = Get-ChildItem -Path "frontend\src" -Filter *.java -Recurse | ForEach-Object { $_.FullName }
-$backendFiles  = Get-ChildItem -Path "backend\src"  -Filter *.java -Recurse | ForEach-Object { $_.FullName }
-$allFiles = $frontendFiles + $backendFiles
-
-Write-Host "Frontend: $($frontendFiles.Count) files" -ForegroundColor Gray
-Write-Host "Backend:  $($backendFiles.Count) files"  -ForegroundColor Gray
-Write-Host "Total:    $($allFiles.Count) files"       -ForegroundColor White
-Write-Host "Compiling..." -ForegroundColor Cyan
-
-javac -cp $LIB -d $BIN -encoding UTF-8 $allFiles
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Compilation Successful!" -ForegroundColor Green
-    Write-Host "Launching..." -ForegroundColor Cyan
-    java -cp "$BIN;$LIB" com.visa.app.Main
+# Default: Gradle Wrapper
+if (Test-Path ".\gradlew.bat") {
+    Write-Host "Building and launching with Gradle Wrapper..." -ForegroundColor Green
+    .\gradlew.bat run
 } else {
-    Write-Host "Compilation Failed." -ForegroundColor Red
+    Write-Host "Gradle wrapper not found, falling back to Maven..." -ForegroundColor Yellow
+    mvn compile exec:java
 }
